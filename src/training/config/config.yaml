@@ -1,0 +1,5 @@
+dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
+tfrecords_dir: 'tfrecords-test-gen'
+mapping_file: 'mappings.yaml'
+destination_size: [256, 128]
+tfrecords_base_name: 'city-scapes.tfrecords'
