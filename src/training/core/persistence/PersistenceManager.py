@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import os
 from shutil import copyfile
 import tensorflow as tf

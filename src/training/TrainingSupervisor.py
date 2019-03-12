@@ -7,12 +7,12 @@ from src.training.core.TrainingConfigReader import TrainingConfigReader
 class TrainingSupervisor:
 
     def full_training(self, descriptive_name, config_path=None):
-        try:
-            config = TrainingConfigReader(config_path)
-            trainer = Trainer(descriptive_name, config)
-            trainer.train()
-        except Exception as ex:
-            print('Failed to convert dataset. {}'.format(ex))
+        # try:
+        config = TrainingConfigReader(config_path)
+        trainer = Trainer(descriptive_name, config)
+        trainer.train()
+        # except Exception as ex:
+        #     print('Failed to proceed full training. {}'.format(ex))
 
 
 if __name__ == '__main__':

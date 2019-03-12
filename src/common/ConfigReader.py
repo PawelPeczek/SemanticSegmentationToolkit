@@ -10,7 +10,7 @@ class ConfigReader(ABC):
         if config_path is None:
             config_path = self._get_default_config_path()
 
-        self.__conf_dict = self._read_config(config_path)
+        self._conf_dict = self._read_config(config_path)
         self._adjust_config_dict()
 
     @abstractmethod
@@ -26,5 +26,5 @@ class ConfigReader(ABC):
         raise NotImplementedError('this method must be implemented')
 
     def __getattr__(self, name):
-        return self.__conf_dict[name]
+        return self._conf_dict[name]
 

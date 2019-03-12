@@ -21,15 +21,15 @@ class DataPreProcessingConfigReader(ConfigReader):
         self.__adjust_destination_size()
 
     def __adjust_dataset_directories_paths(self):
-        base_dataset_dir = self.__conf_dict['dataset_dir']
+        base_dataset_dir = self._conf_dict['dataset_dir']
         keys_to_adjust = ['gt_dir', 'examples_dir', 'output_tfrecords_dir']
         for key in keys_to_adjust:
-            self.__conf_dict[key] = os.path.join(base_dataset_dir, self.__conf_dict[key])
+            self._conf_dict[key] = os.path.join(base_dataset_dir, self._conf_dict[key])
 
     def __adjust_mappping_file_path(self):
-        base_dataset_dir = self.__conf_dict['dataset_dir']
-        self.__conf_dict['mapping_file'] = os.path.join(base_dataset_dir, self.__conf_dict['mapping_file'])
+        base_dataset_dir = self._conf_dict['dataset_dir']
+        self._conf_dict['mapping_file'] = os.path.join(base_dataset_dir, self._conf_dict['mapping_file'])
 
     def __adjust_destination_size(self):
-        dest_size = self.__conf_dict['destination_size']
-        self.__conf_dict['destination_size'] = (dest_size[0], dest_size[1])
+        dest_size = self._conf_dict['destination_size']
+        self._conf_dict['destination_size'] = (dest_size[0], dest_size[1])

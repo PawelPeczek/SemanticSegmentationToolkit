@@ -28,16 +28,14 @@ class TrainingConfigReader(ConfigReader):
         self.__adjust_destination_size()
 
     def __adjust_dataset_directories_paths(self):
-        base_dataset_dir = self.__conf_dict['dataset_dir']
-        self.__conf_dict['tfrecords_dir'] = os.path.join(base_dataset_dir, self.__conf_dict['tfrecords_dir'])
+        base_dataset_dir = self._conf_dict['dataset_dir']
+        self._conf_dict['tfrecords_dir'] = os.path.join(base_dataset_dir, self._conf_dict['tfrecords_dir'])
 
     def __adjust_mappping_file_path(self):
-        base_dataset_dir = self.__conf_dict['dataset_dir']
-        self.__conf_dict['mapping_file'] = os.path.join(base_dataset_dir, self.__conf_dict['mapping_file'])
+        base_dataset_dir = self._conf_dict['dataset_dir']
+        self._conf_dict['mapping_file'] = os.path.join(base_dataset_dir, self._conf_dict['mapping_file'])
 
     def __adjust_destination_size(self):
-        dest_size = self.__conf_dict['destination_size']
-        self.__conf_dict['destination_size'] = (dest_size[0], dest_size[1])
+        dest_size = self._conf_dict['destination_size']
+        self._conf_dict['destination_size'] = (dest_size[0], dest_size[1])
 
-    def __getattr__(self, name):
-        return self.__conf_dict[name]

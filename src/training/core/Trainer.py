@@ -22,9 +22,9 @@ class Trainer:
         self.__persistence_manager.prepare_storage()
         iterator, model_out, ground_truth = self.__build_computation_graph()
         if self.__use_multi_gpu():
-            self.__train_on_single_gpu(iterator, model_out, ground_truth)
-        else:
             self.__train_on_multiple_gpus(iterator, model_out, ground_truth)
+        else:
+            self.__train_on_single_gpu(iterator, model_out, ground_truth)
 
     def __initialize_model(self):
         model_factory = SegmentationModelFactory()
@@ -122,7 +122,7 @@ class Trainer:
         return average_grads
 
     def __get_average_errors_op(self, errors):
-        errors = tf.concat(values=errors, axis=0)
+        errors = tf.stack(errors, axis=0)
         return tf.reduce_mean(errors, axis=0)
 
     def __dump_stats_on_screen(self, epoch, loss):
@@ -159,7 +159,7 @@ class Trainer:
         return error_val < self.__config.increase_saving_frequency_loss_treshold and not saving_freq_decreased
 
     def __get_gpu_to_use(self):
-        if isinstance(list, self.__config.gpu_to_use):
+        if isinstance(self.__config.gpu_to_use, list):
             if self.__use_multi_gpu():
                 return self.__config.gpu_to_use
             else:
@@ -167,4 +167,4 @@ class Trainer:
         return self.__config.gpu_to_use
 
     def __use_multi_gpu(self):
-        return len(self.__config.gpu_to_use) > 0
+        return len(self.__config.gpu_to_use) > 1
