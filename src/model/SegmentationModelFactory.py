@@ -4,12 +4,12 @@ from src.model.small_input_model.ThinModelV2 import ThinModelV2
 from src.model.small_input_model.UltraSlimModel import UltraSlimModel
 
 
-class SegmentationModelBuilder:
+class SegmentationModelFactory:
 
     def __init__(self):
         self.__model_gallery = self.__prepare_model_gallery()
 
-    def build(self, model_name):
+    def assembly(self, model_name):
         if model_name not in self.__model_gallery:
             raise RuntimeError('Requested model not exists or is not registered.')
         return self.__model_gallery[model_name]

@@ -3,3 +3,15 @@ tfrecords_dir: 'tfrecords-test-gen'
 mapping_file: 'mappings.yaml'
 destination_size: [256, 128]
 tfrecords_base_name: 'city-scapes.tfrecords'
+optimizer_options:
+  optimizer_name: 'Adam'
+  learning_rate: 0.001
+model_name: 'ThinModelV2'
+num_classes: 20
+model_storage_directory: '/archive/model_storage/semantic_segmentation_expermient/'
+checkpoint_name: 'checkpoint'
+batch_size: 50
+gpu_to_use: [0, 1]
+epochs: 1000
+increase_saving_frequency_loss_treshold: 0.2
+saving_frequency: 20

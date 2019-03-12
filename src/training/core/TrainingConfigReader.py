@@ -7,6 +7,13 @@ class TrainingConfigReader(ConfigReader):
 
     def __init__(self, config_path=None):
         super().__init__(config_path)
+        if config_path is None:
+            self.__config_path = self._get_default_config_path()
+        else:
+            self.__config_path = config_path
+
+    def get_config_path(self):
+        return self.__config_path
 
     def _get_default_config_path(self):
         return os.path.join(os.path.dirname(__file__), '..', 'config', 'config.yaml')
