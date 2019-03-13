@@ -8,6 +8,8 @@ from src.training.core.persistence.PersistenceManager import PersistenceManager
 
 class Trainer:
 
+    PS_OPS = ['Variable', 'VariableV2', 'AutoReloadVariable']
+
     def __init__(self, descriptive_name, config):
         """
         :param descriptive_name: training process descriptive identifier
@@ -20,11 +22,10 @@ class Trainer:
 
     def train(self):
         self.__persistence_manager.prepare_storage()
-        iterator, model_out, ground_truth = self.__build_computation_graph()
         if self.__use_multi_gpu():
-            self.__train_on_multiple_gpus(iterator, model_out, ground_truth)
+            self.__train_on_multiple_gpus()
         else:
-            self.__train_on_single_gpu(iterator, model_out, ground_truth)
+            self.__train_on_single_gpu()
 
     def __initialize_model(self):
         model_factory = SegmentationModelFactory()
@@ -45,44 +46,58 @@ class Trainer:
     def __get_tf_session_config(self):
         config = tf.ConfigProto(allow_soft_placement=True,
                                 log_device_placement=True)
-        config.gpu_options.allow_growth = True
         return config
 
-    def __train_on_single_gpu(self, iterator, model_out, ground_truth):
-        error = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
-                                                                              labels=ground_truth))
+    def __train_on_single_gpu(self):
+        iterator, model_out, ground_truth = self.__build_computation_graph()
+        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
+                                                                             labels=ground_truth))
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             optimizer = self.__initialize_optimizer()
-            optimization_op = optimizer.minimize(error)
+            optimization_op = optimizer.minimize(loss)
         sess_config = self.__get_tf_session_config()
         with tf.Session(config=sess_config) as sess:
             with tf.device("/gpu:{}".format(self.__get_gpu_to_use())):
-                sess.run(tf.global_variables_initializer())
-                self.__train_loop(sess, iterator, error, optimization_op)
+                self.__train_loop(sess, iterator, loss, optimization_op)
 
-    def __train_on_multiple_gpus(self, iterator, model_out, ground_truth):
-        gardients = []
-        errors = []
-        gpus_to_use = self.__get_gpu_to_use()
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        with tf.control_dependencies(update_ops):
-            optimizer = self.__initialize_optimizer()
-        for gpu_id in gpus_to_use:
-            with tf.device('/gpu:{}'.format(gpu_id)):
-                with tf.name_scope('gpu-{}-scope'.format(gpu_id)):
-                    error = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
-                                                                                          labels=ground_truth))
-                    errors.append(error)
-                    tf.get_variable_scope().reuse_variables()
-                    one_gpu_gradients = optimizer.compute_gradients(error)
-                    gardients.append(one_gpu_gradients)
-        avg_gardients = self.__get_average_gradients_op(gardients)
-        avg_error = self.__get_average_errors_op(errors)
-        apply_gradient_op = optimizer.apply_gradients(avg_gardients)
-        sess_config = self.__get_tf_session_config()
-        with tf.Session(config=sess_config) as sess:
-            self.__train_loop(sess, iterator, avg_error, apply_gradient_op)
+    def __train_on_multiple_gpus(self):
+        with tf.device('/cpu:0'):
+            grads_acc = []
+            loss_acc = []
+            gpus_to_use = self.__get_gpu_to_use()
+            dataset = CityScapesDataset(self.__config)
+            iterator = dataset.get_training_iterator(self.__config.batch_size)
+            for gpu_id in gpus_to_use:
+                with tf.device(self.__assign_to_device('/gpu:{}'.format(gpu_id), ps_device='/cpu:0')):
+                    X, y = iterator.get_next()
+                    with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
+                        model_out = self.__model.run(X, self.__config.num_classes, is_training=True)
+                    loss_op = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out, labels=y)
+                    loss_op = tf.reduce_mean(loss_op)
+                    update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+                    with tf.control_dependencies(update_ops):
+                        optimizer = self.__initialize_optimizer()
+                        grads = optimizer.compute_gradients(loss_op)
+                    grads_acc.append(grads)
+                    loss_acc.append(loss_op)
+            grads_acc = self.__get_average_gradients_op(grads_acc)
+            loss_acc = self.__get_average_errors_op(loss_acc)
+            train_op = optimizer.apply_gradients(grads_acc)
+            sess_config = self.__get_tf_session_config()
+            with tf.Session(config=sess_config) as sess:
+                self.__train_loop(sess, iterator, loss_acc, train_op)
+
+    def __assign_to_device(self, device, ps_device='/cpu:0'):
+
+        def assign(op):
+            node_def = op if isinstance(op, tf.NodeDef) else op.node_def
+            if node_def.op in self.PS_OPS:
+                return "/" + ps_device
+            else:
+                return device
+
+        return assign
 
     def __get_average_gradients_op(self, gardients):
         """
@@ -107,7 +122,6 @@ class Trainer:
             for g, _ in grad_and_vars:
                 # Add 0 dimension to the gradients to represent the tower.
                 expanded_g = tf.expand_dims(g, 0)
-
                 # Append on a 'tower' dimension which we will average over below.
                 grads.append(expanded_g)
             # Average over the 'tower' dimension.
@@ -125,17 +139,15 @@ class Trainer:
         errors = tf.stack(errors, axis=0)
         return tf.reduce_mean(errors, axis=0)
 
-    def __dump_stats_on_screen(self, epoch, loss):
-        sys.stdout.write("\rMid-Epoch #{}\tlast batch loss value: {}\t\t".format(epoch, loss))
-        sys.stdout.flush()
-
-    def __train_loop(self, sess, iterator, error, optimization_op):
+    def __train_loop(self, sess, iterator, loss, optimization_op):
+        sess.run(tf.global_variables_initializer())
+        sess.run(iterator.initializer)
         print('TRAINING [STARTED]')
         saving_freq_decreased = False
         acc_measure_after_ith_ep = self.__config.saving_frequency
         for i in range(0, self.__config.epochs):
             sess.run(iterator.initializer)
-            variables = [error, optimization_op]
+            variables = [loss, optimization_op]
             errors = []
             print("===========================================================================")
             try:
@@ -154,6 +166,10 @@ class Trainer:
                 if (i + 1) % acc_measure_after_ith_ep is 0:
                     self.__persistence_manager.persist_model(sess, i + 1)
         print('TRAINING [FINISHED]')
+
+    def __dump_stats_on_screen(self, epoch, loss):
+        sys.stdout.write("\rMid-Epoch #{}\tlast batch loss value: {}\t\t".format(epoch, loss))
+        sys.stdout.flush()
 
     def __saving_frequency_should_be_increased(self, error_val, saving_freq_decreased):
         return error_val < self.__config.increase_saving_frequency_loss_treshold and not saving_freq_decreased
