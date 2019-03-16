@@ -11,17 +11,17 @@ class EvaluationSupervisor:
         try:
             config = TrainValConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
-                descriptive_name = 'Model evaluation'
+                descriptive_name = 'model_evaluation'
             executor = GraphExecutor(descriptive_name, config, IteratorType.VALIDATION_ITERATOR)
             executor.evaluate()
         except Exception as ex:
-            print('Failed to proceed full training evaluation. {}'.format(ex))
+            print('Failed to proceed model evaluation. {}'.format(ex))
 
     def get_predictions_from_model(self, descriptive_name=None, config_path=None):
         try:
             config = TrainValConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
-                descriptive_name = 'Model predictions'
+                descriptive_name = 'model_predictions'
             executor = GraphExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
             executor.infer()
         except Exception as ex:
@@ -31,7 +31,7 @@ class EvaluationSupervisor:
         try:
             config = TrainValConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
-                descriptive_name = 'Model inference speed measurement'
+                descriptive_name = 'model_inference_speed_measurement'
             executor = GraphExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
             executor.test_inference_speed()
         except Exception as ex:

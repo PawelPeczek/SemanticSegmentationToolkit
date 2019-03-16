@@ -27,4 +27,3 @@ class ConfigReader(ABC):
 
     def __getattr__(self, name):
         return self._conf_dict[name]
-

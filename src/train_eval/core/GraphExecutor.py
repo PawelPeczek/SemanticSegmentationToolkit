@@ -1,6 +1,6 @@
 import os
 import uuid
-
+import time
 import tensorflow as tf
 import sys
 import matplotlib.pyplot as plt
@@ -38,15 +38,36 @@ class GraphExecutor:
             self.__train_on_single_gpu()
 
     def evaluate(self):
-        pass
+        if self.__config.batch_size is not 1:
+            self.__config.batch_size = 1
+        _, model_out, _, y = self.__build_computation_graph()
+        prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
+        weights = tf.to_float(tf.not_equal(y, 0))
+        mean_iou, mean_iou_update = tf.metrics.mean_iou(prediction, y, self.__config.num_classes, weights=weights)
+        saver = tf.train.Saver()
+        config = self.__get_tf_session_config()
+        with tf.Session(config=config) as sess:
+            with tf.device("/gpu:{}".format(self.__config.gpu_to_use)):
+                sess.run(tf.initializers.variables(tf.local_variables()))
+                saver.restore(sess, self.__config.checkpoint_name)
+                self.__proceed_evaluation(sess, mean_iou, mean_iou_update)
 
     def test_inference_speed(self):
-        pass
+        if self.__config.batch_size is not 1:
+            self.__config.batch_size = 1
+        _, model_out, _, _ = self.__build_computation_graph()
+        prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
+        saver = tf.train.Saver()
+        config = self.__get_tf_session_config()
+        with tf.Session(config=config) as sess:
+            with tf.device("/gpu:{}".format(self.__config.gpu_to_use)):
+                saver.restore(sess, self.__config.checkpoint_name)
+                self.__proceed_time_inference_test(sess, prediction)
 
     def infer(self):
         iterator, model_out, X, y = self.__build_computation_graph()
         X_casted = tf.cast(X, tf.uint8)
-        prediction = tf.math.argmax(model_out, axis=3)
+        prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         saver = tf.train.Saver()
         config = self.__get_tf_session_config()
         with tf.Session(config=config) as sess:
@@ -241,3 +262,27 @@ class GraphExecutor:
     def __generate_inference_image_path(self):
         rand_name = '{}-{}.png'.format(self.__descriptive_name, uuid.uuid4())
         return os.path.join(self.__config.model_dir, rand_name)
+
+    def __proceed_time_inference_test(self, sess, prediction):
+        times = []
+        try:
+            for i in range(0, 5):
+                # dummy warm-up predictions
+                sess.run(prediction)
+            while True:
+                start_t = time.time()
+                sess.run(prediction)
+                diff_t = (time.time() - start_t)
+                times.append(diff_t)
+        except tf.errors.OutOfRangeError:
+            avg_inf_time = sum(times) / len(times) if len(times) > 0 else None
+            print("Avg inference time: {}s per frame".format(avg_inf_time))
+            print('Inference speed test [DONE]')
+
+    def __proceed_evaluation(self, sess, mean_iou, mean_iou_update):
+        try:
+            while True:
+                sess.run(mean_iou_update)
+        except tf.errors.OutOfRangeError:
+            miou_metrics = sess.run(mean_iou)
+            print("Mean IOU: {}".format(miou_metrics))
