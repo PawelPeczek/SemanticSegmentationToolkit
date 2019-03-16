@@ -13,30 +13,37 @@ class CityScapesDataset:
         """
         self.__config = config
 
-    def get_dummy_val_iterator(self, tfrecords_files_included, batch_size):
-        if tfrecords_files_included == 'all':
-            tfrecords_filenames = self.__get_tfrecords_list('val')
-        else:
-            tfrecords_filenames = self.__get_tfrecords_list('val')[:tfrecords_files_included]
-        dataset = self.__get_dataset(tfrecords_filenames, batch_size)
+    def get_initializable_dummy_iterator(self, tfrecords_files_included, batch_size):
+        dataset = self.__compose_data_source_for_dummy_iterator(tfrecords_files_included, batch_size)
+        return dataset.make_initializable_iterator()
+
+    def get_one_shot_dummy_iterator(self, tfrecords_files_included, batch_size):
+        dataset = self.__compose_data_source_for_dummy_iterator(tfrecords_files_included, batch_size)
         return dataset.make_one_shot_iterator()
 
     def get_evaluation_iterator(self, batch_size):
         tfrecords_filenames = self.__get_tfrecords_list('val')
-        dataset = self.__get_dataset(tfrecords_filenames, batch_size)
+        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
         return dataset.make_one_shot_iterator()
 
     def get_training_iterator(self, batch_size):
         tfrecords_filenames = self.__get_tfrecords_list('train')
-        dataset = self.__get_dataset(tfrecords_filenames, batch_size)
+        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
         return dataset.make_initializable_iterator()
+
+    def __compose_data_source_for_dummy_iterator(self, tfrecords_files_included, batch_size):
+        if tfrecords_files_included == 'all':
+            tfrecords_filenames = self.__get_tfrecords_list('val')
+        else:
+            tfrecords_filenames = self.__get_tfrecords_list('val')[:tfrecords_files_included]
+        return self.__compose_dataset(tfrecords_filenames, batch_size)
 
     def __get_tfrecords_list(self, subset_name):
         tfrecords_base_dir = self.__config.tfrecords_dir
         tfrecords_file_name_template = '*{}*'.format(self.__config.tfrecords_base_name)
         return glob(os.path.join(tfrecords_base_dir, subset_name, tfrecords_file_name_template))
 
-    def __get_dataset(self, tfrecords_filenames, batch_size):
+    def __compose_dataset(self, tfrecords_filenames, batch_size):
         num_cpu = multiprocessing.cpu_count()
         dataset = tf.data.TFRecordDataset(tfrecords_filenames, num_parallel_reads=num_cpu)
         dataset = dataset.map(self.__parse, num_parallel_calls=num_cpu)

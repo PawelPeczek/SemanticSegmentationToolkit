@@ -113,8 +113,7 @@ class GraphExecutor:
             grads_acc = []
             loss_acc = []
             gpus_to_use = self.__get_gpu_to_use()
-            dataset = CityScapesDataset(self.__config)
-            iterator = dataset.get_training_iterator(self.__config.batch_size)
+            iterator = self.__iterator_factory.get_iterator(self.__iterator_type)
             for gpu_id in gpus_to_use:
                 with tf.device(self.__assign_to_device('/gpu:{}'.format(gpu_id), ps_device='/cpu:0')):
                     X, y = iterator.get_next()

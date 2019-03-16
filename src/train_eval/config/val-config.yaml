@@ -4,10 +4,10 @@ tfrecords_dir: 'tfrecords-test-gen'
 mapping_file: 'mappings.yaml'
 tfrecords_base_name: 'city-scapes.tfrecords'
 destination_size: [256, 128]
-model_name: 'ThinModelV2'
+model_name: 'ThinModelV3'
 num_classes: 20
-model_dir: '/archive/model_storage/semantic_segmentation_expermient/multi-gpu-test_2019_03_14_15:23'
-checkpoint_name: 'checkpoint.ckpt-2220'
+model_dir: '/archive/model_storage/semantic_segmentation_expermient/thin_model_v3_test_2019_03_16_17:27'
+checkpoint_name: 'checkpoint.ckpt-770'
 batch_size: 15
-dummy_iterator_tfrecords_files: 'all'
+dummy_iterator_tfrecords_files: 1
 gpu_to_use: 0
