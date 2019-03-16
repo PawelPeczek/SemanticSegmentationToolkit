@@ -11,7 +11,7 @@ class PersistenceManager:
 
     def __init__(self, descriptive_name, config):
         """
-        :param descriptive_name: training process descriptive identifier
+        :param descriptive_name: train_eval process descriptive identifier
         :param config: TrainingConfigReader object
         """
         self.__descriptive_name = descriptive_name
@@ -23,7 +23,7 @@ class PersistenceManager:
     def prepare_storage(self):
         create_directory(self.__config.model_storage_directory)
         create_directory(self.__training_directory_path)
-        config_copy_path = os.path.join(self.__training_directory_path, 'config.yaml')
+        config_copy_path = os.path.join(self.__training_directory_path, 'train-config.yaml')
         copyfile(self.__config.get_config_path(), config_copy_path)
 
     def log_loss(self, epoch, loss_value):

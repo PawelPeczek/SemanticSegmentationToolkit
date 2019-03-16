@@ -1,4 +1,4 @@
-from src.training.core.optimizer_wrappers.AdamWrapper import AdamWrapper
+from src.train_eval.core.optimizer_wrappers.AdamWrapper import AdamWrapper
 
 
 class OptimizerWrapperFactory:

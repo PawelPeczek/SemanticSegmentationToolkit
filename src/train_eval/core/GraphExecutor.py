@@ -1,24 +1,34 @@
+import os
+import uuid
+
 import tensorflow as tf
 import sys
+import matplotlib.pyplot as plt
 from src.dataset.common.CityScapesDataset import CityScapesDataset
+from src.dataset.common.CityScapesIteratorFactory import CityScapesIteratorFactory
+from src.dataset.utils.mapping_utils import map_colour, get_id_to_colour_mapping
 from src.model.SegmentationModelFactory import SegmentationModelFactory
-from src.training.core.optimizer_wrappers.OptimizerWrapperFactory import OptimizerWrapperFactory
-from src.training.core.persistence.PersistenceManager import PersistenceManager
+from src.train_eval.core.optimizer_wrappers.OptimizerWrapperFactory import OptimizerWrapperFactory
+from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 
 
-class Trainer:
+class GraphExecutor:
 
     PS_OPS = ['Variable', 'VariableV2', 'AutoReloadVariable']
 
-    def __init__(self, descriptive_name, config):
+    def __init__(self, descriptive_name, config, iterator_type):
         """
-        :param descriptive_name: training process descriptive identifier
+        :param descriptive_name: train_eval process descriptive identifier
         :param config: TrainingConfigReader object
+        :param iterator_type: IteratorType
         """
         self.__config = config
         self.__descriptive_name = descriptive_name
         self.__model = self.__initialize_model()
-        self.__persistence_manager = PersistenceManager(descriptive_name, config)
+        if self.__config.mode == 'train':
+            self.__persistence_manager = PersistenceManager(descriptive_name, config)
+        self.__iterator_factory = CityScapesIteratorFactory(config)
+        self.__iterator_type = iterator_type
 
     def train(self):
         self.__persistence_manager.prepare_storage()
@@ -27,16 +37,32 @@ class Trainer:
         else:
             self.__train_on_single_gpu()
 
+    def evaluate(self):
+        pass
+
+    def test_inference_speed(self):
+        pass
+
+    def infer(self):
+        iterator, model_out, X, y = self.__build_computation_graph()
+        X_casted = tf.cast(X, tf.uint8)
+        prediction = tf.math.argmax(model_out, axis=3)
+        saver = tf.train.Saver()
+        config = self.__get_tf_session_config()
+        with tf.Session(config=config) as sess:
+            with tf.device("/gpu:{}".format(self.__config.gpu_to_use)):
+                saver.restore(sess, self.__config.checkpoint_name)
+                self.__proceed_inference(sess, X_casted, prediction, y)
+
     def __initialize_model(self):
         model_factory = SegmentationModelFactory()
         return model_factory.assembly(self.__config.model_name)
 
     def __build_computation_graph(self):
-        dataset = CityScapesDataset(self.__config)
-        iterator = dataset.get_training_iterator(self.__config.batch_size)
+        iterator = self.__iterator_factory.get_iterator(self.__iterator_type)
         X, y = iterator.get_next()
-        model_out = self.__model.run(X, self.__config.num_classes, is_training=True)
-        return iterator, model_out, y
+        model_out = self.__model.run(X, self.__config.num_classes, is_training=self.__config.mode == 'train')
+        return iterator, model_out, X, y
 
     def __initialize_optimizer(self):
         optimizer_wrapper_factory = OptimizerWrapperFactory()
@@ -49,7 +75,7 @@ class Trainer:
         return config
 
     def __train_on_single_gpu(self):
-        iterator, model_out, ground_truth = self.__build_computation_graph()
+        iterator, model_out, _, ground_truth = self.__build_computation_graph()
         loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
                                                                              labels=ground_truth))
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -184,3 +210,34 @@ class Trainer:
 
     def __use_multi_gpu(self):
         return len(self.__config.gpu_to_use) > 1
+
+    def __proceed_inference(self, sess, X_casted, prediction, y):
+        mappings = get_id_to_colour_mapping(self.__config.mapping_file)
+        try:
+            while True:
+                self.__proceed_inference_on_batch(sess, X_casted, prediction, y, mappings)
+        except tf.errors.OutOfRangeError:
+            print('Inference [DONE]')
+
+    def __proceed_inference_on_batch(self, sess, X_casted, prediction, y, mappings):
+        base, inf_res, gt = sess.run([X_casted, prediction, y])
+        fig = plt.figure(figsize=(20, 40))
+        for i in range(0, inf_res.shape[0]):
+            to_show = base[i]
+            fig.add_subplot(inf_res.shape[0], 3, 3 * i + 1)
+            plt.imshow(to_show)
+            fig.add_subplot(inf_res.shape[0], 3, 3 * i + 2)
+            result = inf_res[i]
+            result = map_colour(result, mappings)
+            plt.imshow(result)
+            fig.add_subplot(inf_res.shape[0], 3, 3 * i + 3)
+            ground_truth = gt[i]
+            ground_truth = map_colour(ground_truth, mappings)
+            plt.imshow(ground_truth)
+        image_path = self.__generate_inference_image_path()
+        plt.savefig(image_path)
+        plt.close()
+
+    def __generate_inference_image_path(self):
+        rand_name = '{}-{}.png'.format(self.__descriptive_name, uuid.uuid4())
+        return os.path.join(self.__config.model_dir, rand_name)

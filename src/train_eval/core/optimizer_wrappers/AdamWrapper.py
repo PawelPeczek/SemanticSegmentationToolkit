@@ -1,5 +1,5 @@
 import tensorflow as tf
-from src.training.core.optimizer_wrappers.OptimizerWrapper import OptimizerWrapper
+from src.train_eval.core.optimizer_wrappers.OptimizerWrapper import OptimizerWrapper
 
 
 class AdamWrapper(OptimizerWrapper):

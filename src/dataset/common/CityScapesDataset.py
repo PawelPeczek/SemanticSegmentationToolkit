@@ -13,9 +13,12 @@ class CityScapesDataset:
         """
         self.__config = config
 
-    def get_inference_speed_check_iterator(self, batches_inculded):
-        tfrecords_filenames = self.__get_tfrecords_list('val')[:batches_inculded]
-        dataset = self.__get_dataset(tfrecords_filenames, 1)
+    def get_dummy_val_iterator(self, tfrecords_files_included, batch_size):
+        if tfrecords_files_included == 'all':
+            tfrecords_filenames = self.__get_tfrecords_list('val')
+        else:
+            tfrecords_filenames = self.__get_tfrecords_list('val')[:tfrecords_files_included]
+        dataset = self.__get_dataset(tfrecords_filenames, batch_size)
         return dataset.make_one_shot_iterator()
 
     def get_evaluation_iterator(self, batch_size):

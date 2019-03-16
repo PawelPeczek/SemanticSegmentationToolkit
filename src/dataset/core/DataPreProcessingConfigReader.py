@@ -9,7 +9,7 @@ class DataPreProcessingConfigReader(ConfigReader):
         super().__init__(config_path)
 
     def _get_default_config_path(self):
-        return os.path.join(os.path.dirname(__file__), '..', 'config', 'config.yaml')
+        return os.path.join(os.path.dirname(__file__), '..', 'config', 'train-config.yaml')
 
     def _read_config(self, config_path):
         with open(config_path, 'r') as config_file:

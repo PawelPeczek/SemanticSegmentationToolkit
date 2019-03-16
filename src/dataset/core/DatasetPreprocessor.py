@@ -8,6 +8,8 @@ import numpy as np
 from threading import Thread
 import tensorflow as tf
 import cv2 as cv
+
+from src.dataset.utils.mapping_utils import get_colour_to_id_mapping
 from src.utils.filesystem_utils import create_directory
 
 
@@ -71,7 +73,7 @@ class DatasetPreprocessor:
         print('Start creating *.tfrecords for {} subset'.format(subset_name))
         create_directory(os.path.join(self.__config.output_tfrecords_dir, subset_name))
         paths_list_len = len(files_list)
-        colour_to_id = self.__get_colour_to_id_mapping()
+        colour_to_id = get_colour_to_id_mapping(self.__config.mapping_file)
         batch_size = self.__config.binary_batch_size
         threads = []
         for i in range(0, int(math.ceil(paths_list_len / batch_size))):
@@ -88,17 +90,6 @@ class DatasetPreprocessor:
             print('Task for creating {}-th {} batch just finished.')
         print('Finished creating *.tfrecords for {} subset'.format(subset_name))
         print('========================================================================')
-
-    def __get_colour_to_id_mapping(self):
-        mapping = self.__get_mapping_file_content()
-        result = {}
-        for idx, colour in mapping.values():
-            result[tuple(colour)] = idx
-        return result
-
-    def __get_mapping_file_content(self):
-        with open(self.__config.mapping_file, 'r') as stream:
-            return yaml.load(stream)
 
     def __map_classes_id(self, gt, colour_to_id):
 

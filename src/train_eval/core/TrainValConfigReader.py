@@ -3,9 +3,10 @@ import os
 from src.common.ConfigReader import ConfigReader
 
 
-class TrainingConfigReader(ConfigReader):
+class TrainValConfigReader(ConfigReader):
 
-    def __init__(self, config_path=None):
+    def __init__(self, config_path=None, reader_type='train'):
+        self.__reader_type = reader_type
         super().__init__(config_path)
         if config_path is None:
             self.__config_path = self._get_default_config_path()
@@ -16,7 +17,8 @@ class TrainingConfigReader(ConfigReader):
         return self.__config_path
 
     def _get_default_config_path(self):
-        return os.path.join(os.path.dirname(__file__), '..', 'config', 'config.yaml')
+        default_config_file_name = '{}-config.yaml'.format(self.__reader_type)
+        return os.path.join(os.path.dirname(__file__), '..', 'config', default_config_file_name)
 
     def _read_config(self, config_path):
         with open(config_path, 'r') as config_file:
@@ -26,6 +28,8 @@ class TrainingConfigReader(ConfigReader):
         self.__adjust_dataset_directories_paths()
         self.__adjust_mappping_file_path()
         self.__adjust_destination_size()
+        if self.__reader_type == 'val':
+            self.__adjust_checkpoint_path()
 
     def __adjust_dataset_directories_paths(self):
         base_dataset_dir = self._conf_dict['dataset_dir']
@@ -39,3 +43,6 @@ class TrainingConfigReader(ConfigReader):
         dest_size = self._conf_dict['destination_size']
         self._conf_dict['destination_size'] = (dest_size[0], dest_size[1])
 
+    def __adjust_checkpoint_path(self):
+        model_dir_path = self._conf_dict['model_dir']
+        self._conf_dict['checkpoint_name'] = os.path.join(model_dir_path, self._conf_dict['checkpoint_name'])
