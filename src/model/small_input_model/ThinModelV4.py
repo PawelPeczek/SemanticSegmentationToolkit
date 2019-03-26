@@ -1,10 +1,11 @@
 import tensorflow as tf
+from typing import Union
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 
 class ThinModelV4(SemanticSegmentationModel):
 
-    def run(self, X, num_classes, is_training=True):
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
         #encoder
         input_scaled = self.__filters_scaling(X, 32)
         dil_1 = self.__dilated_block(input_scaled, 32)
@@ -50,7 +51,7 @@ class ThinModelV4(SemanticSegmentationModel):
 
         return self.__filters_scaling(dec_res_3_conv, num_classes, activation=None)
 
-    def __dilated_block(self, X, output_slices):
+    def __dilated_block(self, X: tf.Tensor, output_slices: int) -> tf.Tensor:
         slice_depth = int(output_slices / 4)
         out_1 = tf.layers.conv2d(X, slice_depth, (3, 3), padding='SAME', activation='relu')
         out_2 = tf.layers.conv2d(X, slice_depth, (3, 3), padding='SAME', activation='relu', dilation_rate=(2, 2))
@@ -59,7 +60,7 @@ class ThinModelV4(SemanticSegmentationModel):
         out = tf.concat([out_1, out_2, out_3, out_4], axis=3)
         return out
 
-    def __filters_scaling(self, X, num_filters, activation='relu'):
+    def __filters_scaling(self, X: tf.Tensor, num_filters: int, activation: Union[None, str] = 'relu') -> tf.Tensor:
         return tf.layers.conv2d(X, num_filters, (1, 1), padding='SAME', activation=activation)
 
     def __pyramid_pooling(self, X, output_slices):
@@ -75,7 +76,7 @@ class ThinModelV4(SemanticSegmentationModel):
         out = tf.concat([pool_1, pool_2, pool_3, pool_4], axis=3)
         return out
 
-    def __deconv_block(self, X, output_slices):
+    def __deconv_block(self, X: tf.Tensor, output_slices: int) -> tf.Tensor:
         slice_depth = int(output_slices / 4)
         out_1 = tf.layers.conv2d_transpose(X, slice_depth, (2, 2), strides=(2, 2), padding='SAME', activation='relu')
         out_2 = tf.layers.conv2d_transpose(X, slice_depth, (3, 3), strides=(2, 2), padding='SAME', activation='relu')

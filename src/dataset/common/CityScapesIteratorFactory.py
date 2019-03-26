@@ -1,5 +1,7 @@
 from enum import Enum
+import tensorflow as tf
 from src.dataset.common.CityScapesDataset import CityScapesDataset
+from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
 
 
 class IteratorType(Enum):
@@ -10,15 +12,11 @@ class IteratorType(Enum):
 
 class CityScapesIteratorFactory:
 
-    def __init__(self, config):
+    def __init__(self, config: GraphExecutorConfigReader):
         self.__config = config
         self.__cityscapes_dataset = CityScapesDataset(config)
 
-    def get_iterator(self, iterator_type):
-        """
-        :param iterator_type: IteratorType
-        :return: tf.iterator
-        """
+    def get_iterator(self, iterator_type: IteratorType) -> tf.data.Iterator:
         batch_size = self.__config.batch_size
         if iterator_type == IteratorType.TRAINING_ITERATOR:
             return self.__cityscapes_dataset.get_training_iterator(batch_size)
@@ -27,7 +25,7 @@ class CityScapesIteratorFactory:
         else:
             return self.__prepare_dummy_iterator()
 
-    def __prepare_dummy_iterator(self):
+    def __prepare_dummy_iterator(self) -> tf.data.Iterator:
         batch_size = self.__config.batch_size
         tfrecords_files_to_use = self.__config.dummy_iterator_tfrecords_files
         if self.__config.mode == 'train':

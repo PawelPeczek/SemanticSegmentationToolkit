@@ -3,7 +3,7 @@ import os
 from src.common.ConfigReader import ConfigReader
 
 
-class TrainValConfigReader(ConfigReader):
+class GraphExecutorConfigReader(ConfigReader):
 
     def __init__(self, config_path=None, reader_type='train'):
         self.__reader_type = reader_type

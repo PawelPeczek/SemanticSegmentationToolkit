@@ -1,25 +1,24 @@
 from fire import Fire
+from typing import Union
 
-from src.dataset.common.CityScapesIteratorFactory import IteratorType
-from src.train_eval.core.GraphExecutor import GraphExecutor
-from src.train_eval.core.TrainValConfigReader import TrainValConfigReader
+from src.train_eval.ExecutionSupervisor import ExecutionSupervisor
+from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType
 
 
-class TrainingSupervisor:
+class TrainingSupervisor(ExecutionSupervisor):
 
-    def full_training(self, descriptive_name, config_path=None):
+    def full_training(self, descriptive_name: str, config_path: Union[str, None] = None) -> None:
         try:
-            config = TrainValConfigReader(config_path)
-            executor = GraphExecutor(descriptive_name, config, IteratorType.TRAINING_ITERATOR)
-            executor.train()
+            config = GraphExecutorConfigReader(config_path)
+            self._execute_graph_operation_pipeline(GraphExecutorType.FULL_TRAIN, descriptive_name, config)
         except Exception as ex:
             print('Failed to proceed full training. {}'.format(ex))
 
-    def overfit_training(self, descriptive_name, config_path=None):
+    def overfit_training(self, descriptive_name: str, config_path: Union[str, None] = None) -> None:
         try:
-            config = TrainValConfigReader(config_path)
-            executor = GraphExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
-            executor.train()
+            config = GraphExecutorConfigReader(config_path)
+            self._execute_graph_operation_pipeline(GraphExecutorType.OVERFIT_TRAIN, descriptive_name, config)
         except Exception as ex:
             print('Failed to proceed overfitting training. {}'.format(ex))
 

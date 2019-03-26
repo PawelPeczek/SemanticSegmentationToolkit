@@ -4,7 +4,7 @@ from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 class ThickModel(SemanticSegmentationModel):
 
-    def run(self, X, num_classes, is_training=True):
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
         #encoder
         input_scaled = self.__filters_scaling(X, 64)
         
@@ -49,7 +49,7 @@ class ThickModel(SemanticSegmentationModel):
         
         return tf.reshape(out, [-1, 128, 256, num_classes])
 
-    def __dilated_block(self, X, residual=True):
+    def __dilated_block(self, X: tf.Tensor, residual: bool = True) -> tf.Tensor:
         out_1 = tf.layers.conv2d(X, 64, (5, 5), padding='SAME', activation='relu')
         out_2 = tf.layers.conv2d(X, 64, (3, 3), padding='SAME', activation='relu', dilation_rate=(2, 2))
         out_3 = tf.layers.conv2d(X, 64, (3, 3), padding='SAME', activation='relu', dilation_rate=(4, 4))
@@ -57,26 +57,23 @@ class ThickModel(SemanticSegmentationModel):
         out = out_1 + out_2 + out_3 + out_4
         if residual:
             out = tf.math.add(out, X)
-        
         return out
 
-    def __filters_scaling(self, X, num_filters, activation='relu'):
+    def __filters_scaling(self, X: tf.Tensor, num_filters: int, activation: str = 'relu') -> tf.Tensor:
         return tf.layers.conv2d(X, num_filters, (1, 1), padding='SAME', activation=activation)
 
-    def __pyramid_pooling(self, X):
+    def __pyramid_pooling(self, X: tf.Tensor) -> tf.Tensor:
         pool_1 = tf.nn.pool(X, [2, 2], 'MAX', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         pool_2 = tf.nn.pool(X, [3, 3], 'MAX', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         pool_3 = tf.nn.pool(X, [5, 5], 'MAX', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         pool_4 = tf.nn.pool(X, [8, 8], 'MAX', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         out = pool_1 + pool_2 + pool_3 + pool_4
-        
         return out
 
-    def __deconv_block(self, X):
+    def __deconv_block(self, X: tf.Tensor) -> tf.Tensor:
         out_1 = tf.layers.conv2d_transpose(X, 64, (2, 2), strides=(2, 2), padding='SAME', activation='relu')
         out_2 = tf.layers.conv2d_transpose(X, 64, (3, 3), strides=(2, 2), padding='SAME', activation='relu')
         out_3 = tf.layers.conv2d_transpose(X, 64, (5, 5), strides=(2, 2), padding='SAME', activation='relu')
         out_4 = tf.layers.conv2d_transpose(X, 64, (6, 6), strides=(2, 2), padding='SAME', activation='relu')
         out = out_1 + out_2 + out_3 + out_4
-        
         return out

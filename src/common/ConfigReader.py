@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Dict, Any
 
 
 class ConfigReader(ABC):
@@ -14,16 +15,16 @@ class ConfigReader(ABC):
         self._adjust_config_dict()
 
     @abstractmethod
-    def _get_default_config_path(self):
+    def _get_default_config_path(self) -> str:
         raise NotImplementedError('this method must be implemented')
 
     @abstractmethod
-    def _read_config(self, config_path):
+    def _read_config(self, config_path) -> Dict:
         raise NotImplementedError('this method must be implemented')
 
     @abstractmethod
-    def _adjust_config_dict(self):
+    def _adjust_config_dict(self) -> None:
         raise NotImplementedError('this method must be implemented')
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> Any:
         return self._conf_dict[name]

@@ -4,7 +4,7 @@ from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 class ThinModelV2(SemanticSegmentationModel):
 
-    def run(self, X, num_classes, is_training=True):
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
         #encoder
         input_scaled = self.__filters_scaling(X, 64)
         
@@ -53,7 +53,7 @@ class ThinModelV2(SemanticSegmentationModel):
         
         return self.__filters_scaling(dec_res_3, num_classes)
 
-    def __dilated_block(self, X, dim_red=True, residual=True):
+    def __dilated_block(self, X: tf.Tensor, dim_red: bool = True, residual: bool = True) -> tf.Tensor:
         if dim_red:
             feed_1 = self.__filters_scaling(X, 16)
             feed_2 = self.__filters_scaling(X, 16)
@@ -72,10 +72,10 @@ class ThinModelV2(SemanticSegmentationModel):
         
         return out
 
-    def __filters_scaling(self, X, num_filters):
+    def __filters_scaling(self, X: tf.Tensor, num_filters: int) -> tf.Tensor:
         return tf.layers.conv2d(X, num_filters, (1, 1), padding='SAME', activation='relu')
 
-    def __pyramid_pooling(self, X):
+    def __pyramid_pooling(self, X: tf.Tensor) -> tf.Tensor:
         feed_1 = self.__filters_scaling(X, 16)
         pool_1 = tf.nn.pool(feed_1, [2, 2], 'MAX', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         feed_2 = self.__filters_scaling(X, 16)
@@ -88,7 +88,7 @@ class ThinModelV2(SemanticSegmentationModel):
         out = self.__filters_scaling(out, 64)
         return out
 
-    def __deconv_block(self, X):
+    def __deconv_block(self, X: tf.Tensor) -> tf.Tensor:
         feed_1 = self.__filters_scaling(X, 16)
         out_1 = tf.layers.conv2d_transpose(feed_1, 16, (2, 2), strides=(2, 2), padding='SAME', activation='relu')
         feed_2 = self.__filters_scaling(X, 16)

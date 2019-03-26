@@ -1,5 +1,6 @@
 import numpy as np
 import yaml
+from typing import Dict, Tuple
 
 
 def map_colour(X, mappings):
@@ -10,7 +11,7 @@ def map_colour(X, mappings):
     return np.array(list(map(map_colour_in_row, X)))
 
 
-def get_colour_to_id_mapping(mapping_path):
+def get_colour_to_id_mapping(mapping_path: str) -> Dict[Tuple[int, int, int], int]:
     mapping = get_mapping_file_content(mapping_path)
     result = {}
     for idx, colour in mapping.values():
@@ -18,7 +19,7 @@ def get_colour_to_id_mapping(mapping_path):
     return result
 
 
-def get_id_to_colour_mapping(mapping_path):
+def get_id_to_colour_mapping(mapping_path: str) -> Dict[int, Tuple[int, int, int]]:
     mapping = get_mapping_file_content(mapping_path)
     result = {}
     for idx, colour in mapping.values():
@@ -26,7 +27,7 @@ def get_id_to_colour_mapping(mapping_path):
     return result
 
 
-def get_mapping_file_content(mapping_path):
+def get_mapping_file_content(mapping_path: str) -> Dict:
     with open(mapping_path, 'r') as stream:
         return yaml.load(stream)
 

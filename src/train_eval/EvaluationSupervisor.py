@@ -1,39 +1,37 @@
 from fire import Fire
+from typing import Union
 
-from src.dataset.common.CityScapesIteratorFactory import IteratorType
-from src.train_eval.core.GraphExecutor import GraphExecutor
-from src.train_eval.core.TrainValConfigReader import TrainValConfigReader
+from src.train_eval.ExecutionSupervisor import ExecutionSupervisor
+from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType
 
 
-class EvaluationSupervisor:
+class EvaluationSupervisor(ExecutionSupervisor):
 
-    def evaluate_model(self, descriptive_name=None, config_path=None):
+    def evaluate_model(self, descriptive_name: Union[str, None] = None, config_path: Union[str, None] = None) -> None:
         try:
-            config = TrainValConfigReader(config_path, reader_type='val')
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
                 descriptive_name = 'model_evaluation'
-            executor = GraphExecutor(descriptive_name, config, IteratorType.VALIDATION_ITERATOR)
-            executor.evaluate()
+            self._execute_graph_operation_pipeline(GraphExecutorType.EVALUATION, descriptive_name, config)
         except Exception as ex:
             print('Failed to proceed model evaluation. {}'.format(ex))
 
-    def get_predictions_from_model(self, descriptive_name=None, config_path=None):
+    def get_predictions_from_model(self, descriptive_name: Union[str, None] = None, config_path: Union[str, None] = None) -> None:
         try:
-            config = TrainValConfigReader(config_path, reader_type='val')
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
                 descriptive_name = 'model_predictions'
-            executor = GraphExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
-            executor.infer()
+            self._execute_graph_operation_pipeline(GraphExecutorType.INFERENCE, descriptive_name, config)
         except Exception as ex:
             print('Failed to proceed taking inference from model. {}'.format(ex))
 
-    def measure_inference_speed(self, descriptive_name=None, config_path=None):
+    def measure_inference_speed(self, descriptive_name: Union[str, None] = None, config_path: Union[str, None] = None) -> None:
         try:
-            config = TrainValConfigReader(config_path, reader_type='val')
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
             if descriptive_name is None:
                 descriptive_name = 'model_inference_speed_measurement'
-            executor = GraphExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
-            executor.test_inference_speed()
+            self._execute_graph_operation_pipeline(GraphExecutorType.INFERENCE_SPEED_TEST, descriptive_name, config)
         except Exception as ex:
             print('Failed to proceed speed evaluation. {}'.format(ex))
 

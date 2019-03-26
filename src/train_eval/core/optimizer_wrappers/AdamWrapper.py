@@ -1,13 +1,15 @@
 import tensorflow as tf
+from typing import Dict
+
 from src.train_eval.core.optimizer_wrappers.OptimizerWrapper import OptimizerWrapper
 
 
 class AdamWrapper(OptimizerWrapper):
 
-    def __init__(self, config_dict):
+    def __init__(self, config_dict: Dict):
         super().__init__(config_dict)
 
-    def get_optimizer(self):
+    def get_optimizer(self) -> tf.train.Optimizer:
         learning_rate = self._config_dict['learning_rate']
         beta1 = self._get_parameter_value('beta1', 0.9)
         beta2 = self._get_parameter_value('beta1', 0.999)
