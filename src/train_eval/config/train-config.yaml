@@ -7,7 +7,7 @@ tfrecords_base_name: 'city-scapes.tfrecords'
 optimizer_options:
   optimizer_name: 'Adam'
   learning_rate: 0.001
-model_name: 'ThinModelV4'
+model_name: 'ThinModelV2'
 num_classes: 20
 model_storage_directory: '/archive/model_storage/semantic_segmentation_expermient/'
 checkpoint_name: 'checkpoint'

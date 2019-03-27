@@ -49,12 +49,12 @@ class TrainingExecutor(GraphExecutor):
             grads_acc = []
             loss_acc = []
             gpus_to_use = self.__get_gpu_to_use()
-            iterator = self.__iterator_factory.get_iterator(self.__iterator_type)
+            iterator = self._iterator_factory.get_iterator(self.__iterator_type)
             for gpu_id in gpus_to_use:
                 with tf.device(self.__assign_to_device('/gpu:{}'.format(gpu_id), ps_device='/cpu:0')):
                     X, y = iterator.get_next()
                     with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
-                        model_out = self.__model.run(X, self._config.num_classes, is_training=True)
+                        model_out = self._model.run(X, self._config.num_classes, is_training=True)
                     loss_op = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out, labels=y)
                     loss_op = tf.reduce_mean(loss_op)
                     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)

@@ -14,8 +14,8 @@ class GraphExecutor(ABC):
     def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
         self._config = config
         self._descriptive_name = descriptive_name
-        self.__model = self.__construct_model()
-        self.__iterator_factory = CityScapesIteratorFactory(config)
+        self._model = self.__construct_model()
+        self._iterator_factory = CityScapesIteratorFactory(config)
         self._persistence_manager = self._get_persistence_manager()
 
     @abstractmethod
@@ -36,9 +36,9 @@ class GraphExecutor(ABC):
         return config
 
     def _build_computation_graph(self) -> Tuple[tf.data.Iterator, tf.Tensor, tf.Tensor, tf.Tensor]:
-        iterator = self.__iterator_factory.get_iterator(self._get_iterator_type())
+        iterator = self._iterator_factory.get_iterator(self._get_iterator_type())
         X, y = iterator.get_next()
-        model_out = self.__model.run(X, self._config.num_classes, is_training=self._config.mode == 'train')
+        model_out = self._model.run(X, self._config.num_classes, is_training=self._config.mode == 'train')
         return iterator, model_out, X, y
 
     def _initialize_optimizer(self) -> tf.train.Optimizer:

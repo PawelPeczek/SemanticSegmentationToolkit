@@ -35,6 +35,15 @@ class EvaluationSupervisor(ExecutionSupervisor):
         except Exception as ex:
             print('Failed to proceed speed evaluation. {}'.format(ex))
 
+    def visualise_graph(self, descriptive_name: Union[str, None] = None, config_path: Union[str, None] = None) -> None:
+        try:
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
+            if descriptive_name is None:
+                descriptive_name = 'graph_visualisation'
+            self._execute_graph_operation_pipeline(GraphExecutorType.GRAPH_VISUALISATION, descriptive_name, config)
+        except Exception as ex:
+            print('Failed to visualise graph. {}'.format(ex))
+
 
 if __name__ == '__main__':
     Fire(EvaluationSupervisor)

@@ -1,4 +1,5 @@
 import tensorflow as tf
+from tensorflow.python.client import timeline
 import time
 
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
@@ -37,6 +38,7 @@ class InferenceSpeedTestExecutor(GraphExecutor):
             for i in range(0, 5):
                 # dummy warm-up predictions
                 sess.run(prediction)
+            self.__profile_inference(sess, prediction)
             while True:
                 start_t = time.time()
                 sess.run(prediction)
@@ -46,3 +48,11 @@ class InferenceSpeedTestExecutor(GraphExecutor):
             avg_inf_time = sum(times) / len(times) if len(times) > 0 else None
             print("Avg inference time: {}s per frame".format(avg_inf_time))
             print('Inference speed test [DONE]')
+
+    def __profile_inference(self, sess: tf.Session, prediction: tf.Tensor) -> None:
+        options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
+        run_metadata = tf.RunMetadata()
+        sess.run(prediction, options=options, run_metadata=run_metadata)
+        fetched_timeline = timeline.Timeline(run_metadata.step_stats)
+        trace = fetched_timeline.generate_chrome_trace_format()
+        self._persistence_manager.save_profiling_trace(trace)

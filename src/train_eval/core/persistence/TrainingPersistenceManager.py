@@ -1,5 +1,5 @@
 import os
-import datetime
+from shutil import copyfile
 
 from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
@@ -11,6 +11,11 @@ class TrainingPersistenceManager(PersistenceManager):
         super().__init__(descriptive_name, config)
 
     def _generate_model_dir_path(self) -> str:
-        timestamp = datetime.now().strftime("%Y_%m_%d_%H:%M")
-        training_dir_name = '{}_{}'.format(self.__descriptive_name, timestamp)
+        timestamp = self._get_current_timestamp()
+        training_dir_name = '{}_{}'.format(self._descriptive_name, timestamp)
         return os.path.join(self._config.model_storage_directory, training_dir_name)
+
+    def _prepare_storage(self) -> None:
+        super()._prepare_storage()
+        config_copy_path = os.path.join(self._model_directory_path, 'train-config.yaml')
+        copyfile(self._config.get_config_path(), config_copy_path)

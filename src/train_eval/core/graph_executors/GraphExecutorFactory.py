@@ -7,6 +7,7 @@ from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
 from src.train_eval.core.graph_executors.InferenceExecutor import InferenceExecutor
 from src.train_eval.core.graph_executors.InferenceSpeedTestExecutor import InferenceSpeedTestExecutor
 from src.train_eval.core.graph_executors.TrainingExecutor import TrainingExecutor
+from src.train_eval.core.graph_executors.VisualisationExecutor import VisualisationExecutor
 
 
 class GraphExecutorType(Enum):
@@ -15,7 +16,7 @@ class GraphExecutorType(Enum):
     INFERENCE_SPEED_TEST = 3
     FULL_TRAIN = 4
     OVERFIT_TRAIN = 5
-
+    GRAPH_VISUALISATION = 6
 
 class GraphExecutorFactory:
 
@@ -28,6 +29,8 @@ class GraphExecutorFactory:
             return InferenceSpeedTestExecutor(descriptive_name, config)
         if executor_type == GraphExecutorType.FULL_TRAIN:
             return TrainingExecutor(descriptive_name, config, IteratorType.TRAINING_ITERATOR)
-        else:
+        if executor_type == GraphExecutorType.OVERFIT_TRAIN:
             return TrainingExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
+        else:
+            return VisualisationExecutor(descriptive_name, config)
 
