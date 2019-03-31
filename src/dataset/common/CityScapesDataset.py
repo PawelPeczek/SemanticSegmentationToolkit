@@ -21,15 +21,21 @@ class CityScapesDataset:
         dataset = self.__compose_data_source_for_dummy_iterator(tfrecords_files_included, batch_size)
         return dataset.make_one_shot_iterator()
 
-    def get_evaluation_iterator(self, batch_size: int) -> tf.data.Iterator:
+    def get_one_shot_validation_iterator(self, batch_size: int) -> tf.data.Iterator:
         tfrecords_filenames = self.__get_tfrecords_list('val')
-        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
-        return dataset.make_one_shot_iterator()
+        return self.__compose_one_shot_iterator_from_tfrecords(tfrecords_filenames, batch_size)
 
-    def get_training_iterator(self, batch_size: int) -> tf.data.Iterator:
+    def get_one_shot_train_iterator(self, batch_size: int) -> tf.data.Iterator:
         tfrecords_filenames = self.__get_tfrecords_list('train')
-        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
-        return dataset.make_initializable_iterator()
+        return self.__compose_one_shot_iterator_from_tfrecords(tfrecords_filenames, batch_size)
+
+    def get_initializable_validation_iterator(self, batch_size: int) -> tf.data.Iterator:
+        tfrecords_filenames = self.__get_tfrecords_list('val')
+        return self.__compose_initializable_iterator_from_tfrecords(tfrecords_filenames, batch_size)
+
+    def get_initializable_train_iterator(self, batch_size: int) -> tf.data.Iterator:
+        tfrecords_filenames = self.__get_tfrecords_list('train')
+        return self.__compose_initializable_iterator_from_tfrecords(tfrecords_filenames, batch_size)
 
     def __compose_data_source_for_dummy_iterator(self, tfrecords_files_included: Union[str, int], batch_size: int) -> tf.data.Dataset:
         if tfrecords_files_included == 'all':
@@ -51,6 +57,14 @@ class CityScapesDataset:
         dataset = dataset.batch(batch_size=batch_size)
         dataset = dataset.prefetch(num_cpu * batch_size)
         return dataset
+
+    def __compose_one_shot_iterator_from_tfrecords(self, tfrecords_filenames: List[str], batch_size: int) -> tf.data.Iterator:
+        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
+        return dataset.make_one_shot_iterator()
+
+    def __compose_initializable_iterator_from_tfrecords(self, tfrecords_filenames: List[str], batch_size: int) -> tf.data.Iterator:
+        dataset = self.__compose_dataset(tfrecords_filenames, batch_size)
+        return dataset.make_initializable_iterator()
 
     def __parse(self, serialized_example: tf.string) -> Tuple[tf.Tensor, tf.Tensor]:
         features = \

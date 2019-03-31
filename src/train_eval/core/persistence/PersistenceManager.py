@@ -23,9 +23,19 @@ class PersistenceManager(ABC):
         self._graph_summary_path = self.__generate_graph_summary_path()
         self._prepare_storage()
 
-    def log_loss(self, epoch: int, loss_value: float) -> None:
+    def log_loss(self, epoch: int, loss_value: float, train_acc: float = -1.0, val_acc: float = -1.0) -> None:
+        log_content = '{},{},'.format(epoch, loss_value)
+        if train_acc >= 0:
+            log_content = '{}{},'.format(log_content, train_acc)
+        else:
+            log_content = '{},'.format(log_content)
+        if val_acc >= 0:
+            log_content = '{}{}'.format(log_content, val_acc)
+        if not os.path.exists(self._loss_log_file_path):
+            header = 'Epoch no.,Loss,Train acc.,Val acc.{}'.format(os.linesep)
+            log_content = '{}{}'.format(header, log_content)
         with open(self._loss_log_file_path, 'a') as log_file:
-            log_file.write('{},{}{}'.format(epoch, loss_value, os.linesep))
+            log_file.write('{}{}'.format(log_content, os.linesep))
 
     def persist_model(self, session: tf.Session, epoch: int) -> None:
         print('===========================================================')

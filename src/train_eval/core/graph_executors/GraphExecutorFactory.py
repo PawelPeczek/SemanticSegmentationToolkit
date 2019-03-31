@@ -28,7 +28,7 @@ class GraphExecutorFactory:
         if executor_type == GraphExecutorType.INFERENCE_SPEED_TEST:
             return InferenceSpeedTestExecutor(descriptive_name, config)
         if executor_type == GraphExecutorType.FULL_TRAIN:
-            return TrainingExecutor(descriptive_name, config, IteratorType.TRAINING_ITERATOR)
+            return TrainingExecutor(descriptive_name, config, IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
         if executor_type == GraphExecutorType.OVERFIT_TRAIN:
             return TrainingExecutor(descriptive_name, config, IteratorType.DUMMY_ITERATOR)
         else:

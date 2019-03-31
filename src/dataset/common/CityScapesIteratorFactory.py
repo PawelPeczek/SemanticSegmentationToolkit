@@ -5,10 +5,11 @@ from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigRea
 
 
 class IteratorType(Enum):
-    TRAINING_ITERATOR = 1
+    INITIALIZABLE_TRAIN_SET_ITERATOR = 1
     DUMMY_ITERATOR = 2
-    VALIDATION_ITERATOR = 3
-
+    OS_VALIDATION_ITERATOR = 3
+    OS_TRAIN_ITERATOR = 4
+    INITIALIZABLE_VALIDATION_ITERATOR = 5
 
 class CityScapesIteratorFactory:
 
@@ -18,10 +19,14 @@ class CityScapesIteratorFactory:
 
     def get_iterator(self, iterator_type: IteratorType) -> tf.data.Iterator:
         batch_size = self.__config.batch_size
-        if iterator_type == IteratorType.TRAINING_ITERATOR:
-            return self.__cityscapes_dataset.get_training_iterator(batch_size)
-        elif iterator_type == IteratorType.VALIDATION_ITERATOR:
-            return self.__cityscapes_dataset.get_evaluation_iterator(batch_size)
+        if iterator_type == IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR:
+            return self.__cityscapes_dataset.get_initializable_train_iterator(batch_size)
+        elif iterator_type == IteratorType.OS_VALIDATION_ITERATOR:
+            return self.__cityscapes_dataset.get_one_shot_validation_iterator(batch_size)
+        elif iterator_type == IteratorType.OS_TRAIN_ITERATOR:
+            return self.__cityscapes_dataset.get_one_shot_train_iterator(batch_size)
+        elif iterator_type == IteratorType.INITIALIZABLE_VALIDATION_ITERATOR:
+            return self.__cityscapes_dataset.get_initializable_validation_iterator(batch_size)
         else:
             return self.__prepare_dummy_iterator()
 

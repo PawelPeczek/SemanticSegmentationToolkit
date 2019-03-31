@@ -3,6 +3,7 @@ import tensorflow as tf
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
 from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
+from src.train_eval.core.graph_executors.utils.EvaluationUtils import EvaluationUtils
 from src.train_eval.core.persistence.EvaluationPersistenceManager import EvaluationPersistenceManager
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 
@@ -25,18 +26,11 @@ class EvaluationExecutor(GraphExecutor):
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 sess.run(tf.initializers.variables(tf.local_variables()))
                 saver.restore(sess, self._config.checkpoint_name)
-                self.__proceed_evaluation(sess, mean_iou, mean_iou_update)
+                miou_metrics = EvaluationUtils.evaluate_miou(sess, mean_iou, mean_iou_update)
+                print("Mean IOU: {}".format(miou_metrics))
 
     def _get_iterator_type(self) -> IteratorType:
-        return IteratorType.VALIDATION_ITERATOR
+        return IteratorType.OS_VALIDATION_ITERATOR
 
     def _get_persistence_manager(self) -> PersistenceManager:
         return EvaluationPersistenceManager(self._descriptive_name, self._config)
-
-    def __proceed_evaluation(self, sess: tf.Session, mean_iou: tf.Operation, mean_iou_update: tf.Operation) -> None:
-        try:
-            while True:
-                sess.run(mean_iou_update)
-        except tf.errors.OutOfRangeError:
-            miou_metrics = sess.run(mean_iou)
-            print("Mean IOU: {}".format(miou_metrics))
