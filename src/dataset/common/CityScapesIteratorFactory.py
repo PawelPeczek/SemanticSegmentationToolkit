@@ -1,7 +1,7 @@
 from enum import Enum
 import tensorflow as tf
 from src.dataset.common.CityScapesDataset import CityScapesDataset
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 
 
 class IteratorType(Enum):

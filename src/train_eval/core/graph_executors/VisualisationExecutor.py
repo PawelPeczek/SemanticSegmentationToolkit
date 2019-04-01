@@ -1,8 +1,7 @@
 import tensorflow as tf
-import os
 
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
 from src.train_eval.core.persistence.EvaluationPersistenceManager import EvaluationPersistenceManager
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager

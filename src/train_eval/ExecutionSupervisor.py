@@ -1,6 +1,6 @@
 from abc import ABC
 
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType, GraphExecutorFactory
 
 

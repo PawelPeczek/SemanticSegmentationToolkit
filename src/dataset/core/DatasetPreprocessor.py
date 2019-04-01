@@ -79,7 +79,7 @@ class DatasetPreprocessor:
                 chunk = files_list[i * batch_size:(i + 1) * batch_size]
             else:
                 chunk = files_list[i * batch_size:]
-            thread = Thread(target=self.__prepare_tfrecords_batch, args=[subset_name, i, chunk, colour_to_id])
+            thread = Thread(target=self.__prepare_tfrecords_batch, args=[subset_name, i, chunk, colour_to_id.copy()])
             thread.start()
             threads.append((i, thread))
             print('Task for creating {}-th {} batch just started.'.format(i, subset_name))
@@ -97,7 +97,6 @@ class DatasetPreprocessor:
                 return colour_to_id[colour]
             else:
                 return 0
-
         return np.apply_along_axis(class_mapper, 2, gt)
 
     def __prepare_tfrecords_batch(self, subset_name: str, batch_id: int, data: List[Tuple[str, str]],

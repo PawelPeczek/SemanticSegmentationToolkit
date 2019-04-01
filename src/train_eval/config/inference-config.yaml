@@ -1,0 +1,10 @@
+mapping_file: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+destination_size: [256, 128]
+model_name: 'ThinModelV2'
+num_classes: 20
+model_dir: '/archive/model_storage/semantic_segmentation_expermient/single-gpu-stability-test_2019_03_13_05:36'
+checkpoint_name: 'checkpoint.ckpt-1000'
+gpu_to_use: 0
+input_video: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/stuttgart_01.avi'
+persist_video: True
+output_video_file: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/infered_stuttgart_01.avi'

@@ -1,8 +1,8 @@
 dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
 gt_dir: 'gtFine'
 examples_dir: 'leftImg8bit'
-output_tfrecords_dir: 'tfrecords-test-gen'
+output_tfrecords_dir: 'tfrecords-full-size'
 mapping_file: 'mappings.yaml'
-destination_size: [256, 128]
-binary_batch_size: 100
+destination_size: [2048, 1024]
+binary_batch_size: 200
 tfrecords_base_name: 'city-scapes.tfrecords'

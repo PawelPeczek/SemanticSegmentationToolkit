@@ -5,7 +5,7 @@ from glob import glob
 from typing import List, Tuple, Union
 import os
 
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 
 
 class CityScapesDataset:

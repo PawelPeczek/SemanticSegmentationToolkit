@@ -1,4 +1,4 @@
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 
 

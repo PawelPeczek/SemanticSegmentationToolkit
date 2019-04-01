@@ -4,7 +4,7 @@ from typing import Tuple
 from src.dataset.common.CityScapesIteratorFactory import CityScapesIteratorFactory, IteratorType
 from src.model.SegmentationModelFactory import SegmentationModelFactory
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.optimizer_wrappers.OptimizerWrapperFactory import OptimizerWrapperFactory
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any
 
+from src.utils.filesystem_utils import read_yaml_file
+
 
 class ConfigReader(ABC):
 
@@ -18,9 +20,8 @@ class ConfigReader(ABC):
     def _get_default_config_path(self) -> str:
         raise NotImplementedError('this method must be implemented')
 
-    @abstractmethod
     def _read_config(self, config_path) -> Dict:
-        raise NotImplementedError('this method must be implemented')
+        return read_yaml_file(config_path)
 
     @abstractmethod
     def _adjust_config_dict(self) -> None:

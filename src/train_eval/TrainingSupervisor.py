@@ -2,7 +2,7 @@ from fire import Fire
 from typing import Union
 
 from src.train_eval.ExecutionSupervisor import ExecutionSupervisor
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType
 
 

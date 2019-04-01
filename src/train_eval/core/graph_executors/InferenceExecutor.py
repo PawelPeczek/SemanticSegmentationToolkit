@@ -1,12 +1,10 @@
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from typing import Dict, Tuple
-import os
-import uuid
 
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
 from src.dataset.utils.mapping_utils import get_id_to_colour_mapping, map_colour
-from src.train_eval.core.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
 from src.train_eval.core.persistence.EvaluationPersistenceManager import EvaluationPersistenceManager
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager

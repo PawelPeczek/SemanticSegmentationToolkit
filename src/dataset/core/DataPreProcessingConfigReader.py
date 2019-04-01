@@ -10,11 +10,7 @@ class DataPreProcessingConfigReader(ConfigReader):
         super().__init__(config_path)
 
     def _get_default_config_path(self) -> str:
-        return os.path.join(os.path.dirname(__file__), '..', 'config', 'train-config.yaml')
-
-    def _read_config(self, config_path) -> Dict:
-        with open(config_path, 'r') as config_file:
-            return yaml.load(config_file)
+        return os.path.join(os.path.dirname(__file__), '..', 'config', 'config.yaml')
 
     def _adjust_config_dict(self) -> None:
         self.__adjust_dataset_directories_paths()
