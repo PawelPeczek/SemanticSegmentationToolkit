@@ -1,11 +1,11 @@
 import tensorflow as tf
-from typing import Union
+from typing import Union, Optional
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 
 class ThinModelV3(SemanticSegmentationModel):
 
-    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True, y: Optional[tf.Tensor] = None) -> Union[tf.Tensor, Optional[tf.Tensor]]:
         #encoder
         input_scaled = self.__filters_scaling(X, 32)
         dil_1 = self.__dilated_block(input_scaled, 32)
@@ -49,7 +49,12 @@ class ThinModelV3(SemanticSegmentationModel):
         dec_res_3 = tf.math.add(bn_11, input_scaled)
         dec_res_3_conv = self.__filters_scaling(dec_res_3, dec_res_3.shape[-1])
 
-        return self.__filters_scaling(dec_res_3_conv, num_classes, activation=None)
+        model_out = self.__filters_scaling(dec_res_3_conv, num_classes, activation=None)
+        loss = None
+        if is_training:
+            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
+                                                                                 labels=y))
+        return model_out, loss
 
     def __dilated_block(self, X: tf.Tensor, output_slices: int) -> tf.Tensor:
         slice_depth = int(output_slices / 4)

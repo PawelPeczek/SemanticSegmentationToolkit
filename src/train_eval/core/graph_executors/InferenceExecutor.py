@@ -16,7 +16,7 @@ class InferenceExecutor(GraphExecutor):
         super().__init__(descriptive_name, config)
 
     def execute(self) -> None:
-        iterator, model_out, X, y = self._build_computation_graph()
+        iterator, (model_out, _), X, y = self._build_computation_graph()
         X_casted = tf.cast(X, tf.uint8)
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         saver = tf.train.Saver()

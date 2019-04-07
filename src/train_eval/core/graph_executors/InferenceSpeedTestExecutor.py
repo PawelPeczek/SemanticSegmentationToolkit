@@ -17,7 +17,7 @@ class InferenceSpeedTestExecutor(GraphExecutor):
     def execute(self) -> None:
         if self._config.batch_size is not 1:
             self._config.batch_size = 1
-        _, model_out, _, _ = self._build_computation_graph()
+        _, (model_out, _), _, _ = self._build_computation_graph()
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         saver = tf.train.Saver()
         config = self._get_tf_session_config()

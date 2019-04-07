@@ -31,9 +31,7 @@ class TrainingExecutor(GraphExecutor):
         return TrainingPersistenceManager(self._descriptive_name, self._config)
 
     def __train_on_single_gpu(self) -> None:
-        iterator, model_out, _, ground_truth = self._build_computation_graph()
-        loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
-                                                                             labels=ground_truth))
+        iterator, (model_out, loss), _, ground_truth = self._build_computation_graph()
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             optimizer = self._initialize_optimizer()
@@ -55,9 +53,7 @@ class TrainingExecutor(GraphExecutor):
                 with tf.device(self.__assign_to_device('/gpu:{}'.format(gpu_id), ps_device='/cpu:0')):
                     X, y = iterator.get_next()
                     with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
-                        model_out = self._model.run(X, self._config.num_classes, is_training=True)
-                    loss_op = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out, labels=y)
-                    loss_op = tf.reduce_mean(loss_op)
+                        model_out, loss_op = self._model.run(X, self._config.num_classes, is_training=True, y=y)
                     update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
                     with tf.control_dependencies(update_ops):
                         optimizer = self._initialize_optimizer()

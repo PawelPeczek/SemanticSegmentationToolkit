@@ -1,10 +1,12 @@
+from typing import Optional, Union
+
 import tensorflow as tf
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 
 class UltraSlimModel(SemanticSegmentationModel):
 
-    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True, y: Optional[tf.Tensor] = None) -> Union[tf.Tensor, Optional[tf.Tensor]]:
         # encoder
         input_scaled = self.__filters_scaling(X, 32)
         
@@ -45,7 +47,12 @@ class UltraSlimModel(SemanticSegmentationModel):
         bn_11 = tf.layers.batch_normalization(deconv_3, training=is_training)
         dec_res_3 = tf.math.add(bn_11, input_scaled)
         
-        return self.__filters_scaling(dec_res_3, num_classes)
+        model_out = self.__filters_scaling(dec_res_3, num_classes)
+        loss = None
+        if is_training:
+            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
+                                                                                 labels=y))
+        return model_out, loss
 
     def __dilated_block(self, X: tf.Tensor, dim_red: bool = True, residual: bool = True) -> tf.Tensor:
         if dim_red:

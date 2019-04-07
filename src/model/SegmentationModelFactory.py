@@ -1,6 +1,7 @@
 from typing import Dict
 
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
+from src.model.normal_input_model.ICNetV2 import ICNetV2
 from src.model.small_input_model.ThickModel import ThickModel
 from src.model.small_input_model.ThinModelV1 import ThinModelV1
 from src.model.small_input_model.ThinModelV2 import ThinModelV2
@@ -26,7 +27,8 @@ class SegmentationModelFactory:
             'ThinModelV2': ThinModelV2(),
             'ThinModelV3': ThinModelV3(),
             'ThinModelV4': ThinModelV4(),
-            'UltraSlimModel': UltraSlimModel()
+            'UltraSlimModel': UltraSlimModel(),
+            'ICNetV2': ICNetV2()
         }
         return gallery
 

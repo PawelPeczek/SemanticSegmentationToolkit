@@ -16,7 +16,7 @@ class EvaluationExecutor(GraphExecutor):
     def execute(self) -> None:
         if self._config.batch_size is not 1:
             self._config.batch_size = 1
-        _, model_out, _, y = self._build_computation_graph()
+        _, (model_out, _), _, y = self._build_computation_graph()
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         weights = tf.to_float(tf.not_equal(y, 0))
         mean_iou, mean_iou_update = tf.metrics.mean_iou(prediction, y, self._config.num_classes, weights=weights)

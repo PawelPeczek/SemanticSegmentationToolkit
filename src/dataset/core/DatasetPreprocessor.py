@@ -1,10 +1,12 @@
 import os
+from copy import deepcopy
 from glob import glob
 import re
 from functools import reduce
 import math
 import numpy as np
 from threading import Thread
+from multiprocessing import Process
 import tensorflow as tf
 import cv2 as cv
 from typing import List, Tuple, Dict
@@ -73,31 +75,21 @@ class DatasetPreprocessor:
         paths_list_len = len(files_list)
         colour_to_id = get_colour_to_id_mapping(self.__config.mapping_file)
         batch_size = self.__config.binary_batch_size
-        threads = []
+        processes = []
         for i in range(0, int(math.ceil(paths_list_len / batch_size))):
             if (i + 1) * batch_size < paths_list_len:
                 chunk = files_list[i * batch_size:(i + 1) * batch_size]
             else:
                 chunk = files_list[i * batch_size:]
-            thread = Thread(target=self.__prepare_tfrecords_batch, args=[subset_name, i, chunk, colour_to_id.copy()])
-            thread.start()
-            threads.append((i, thread))
+            process = Process(target=self.__prepare_tfrecords_batch, args=[subset_name, i, chunk, colour_to_id])
+            process.start()
+            processes.append((i, process))
             print('Task for creating {}-th {} batch just started.'.format(i, subset_name))
-        for task_id, thread in threads:
-            thread.join()
-            print('Task for creating {}-th {} batch just finished.')
+        for task_id, process in processes:
+            process.join()
+            print('Task for creating {}-th {} batch just finished.'.format(i, subset_name))
         print('Finished creating *.tfrecords for {} subset'.format(subset_name))
         print('========================================================================')
-
-    def __map_classes_id(self, gt: np.ndarray, colour_to_id: Dict[Tuple[int, int, int], int]) -> np.ndarray:
-
-        def class_mapper(colour: List[int]) -> int:
-            colour = colour[0], colour[1], colour[2]
-            if colour in colour_to_id:
-                return colour_to_id[colour]
-            else:
-                return 0
-        return np.apply_along_axis(class_mapper, 2, gt)
 
     def __prepare_tfrecords_batch(self, subset_name: str, batch_id: int, data: List[Tuple[str, str]],
                                   colour_to_id: Dict[Tuple[int, int, int], int]) -> None:
@@ -124,6 +116,17 @@ class DatasetPreprocessor:
         gt = self.__map_classes_id(gt, colour_to_id)
         gt = gt.astype(np.uint8)
         return example.tostring(), gt.tostring()
+
+    def __map_classes_id(self, gt: np.ndarray, colour_to_id: Dict[Tuple[int, int, int], int]) -> np.ndarray:
+
+        def class_mapper(colour: List[int]) -> int:
+            colour = colour[0], colour[1], colour[2]
+            if colour in colour_to_id:
+                return colour_to_id[colour]
+            else:
+                return 0
+
+        return np.apply_along_axis(class_mapper, 2, gt)
 
     def __wrap_bytes(self, value: bytes) -> tf.train.Feature:
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))

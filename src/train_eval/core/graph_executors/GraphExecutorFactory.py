@@ -18,6 +18,7 @@ class GraphExecutorType(Enum):
     OVERFIT_TRAIN = 5
     GRAPH_VISUALISATION = 6
 
+
 class GraphExecutorFactory:
 
     def assembly(self, executor_type: GraphExecutorType, descriptive_name: str, config: GraphExecutorConfigReader) -> GraphExecutor:

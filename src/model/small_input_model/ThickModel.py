@@ -1,10 +1,12 @@
+from typing import Optional, Union
+
 import tensorflow as tf
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 
 class ThickModel(SemanticSegmentationModel):
 
-    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True) -> tf.Tensor:
+    def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True, y: Optional[tf.Tensor] = None) -> Union[tf.Tensor, Optional[tf.Tensor]]:
         #encoder
         input_scaled = self.__filters_scaling(X, 64)
         
@@ -47,7 +49,12 @@ class ThickModel(SemanticSegmentationModel):
         flatten = tf.reshape(dec_res_3, [-1, 64])
         out = tf.layers.dense(flatten, num_classes, activation='relu')
         
-        return tf.reshape(out, [-1, 128, 256, num_classes])
+        model_out = tf.reshape(out, [-1, 128, 256, num_classes])
+        loss = None
+        if is_training:
+            loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=model_out,
+                                                                                 labels=y))
+        return model_out, loss
 
     def __dilated_block(self, X: tf.Tensor, residual: bool = True) -> tf.Tensor:
         out_1 = tf.layers.conv2d(X, 64, (5, 5), padding='SAME', activation='relu')
