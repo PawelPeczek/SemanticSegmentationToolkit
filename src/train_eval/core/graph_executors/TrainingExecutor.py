@@ -36,8 +36,8 @@ class TrainingExecutor(GraphExecutor):
         with tf.control_dependencies(update_ops):
             optimizer = self._initialize_optimizer()
             optimization_op = optimizer.minimize(loss)
-        val_set_miou_ops = self.__build_inter_training__evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
-        train_set_miou_ops = self.__build_inter_training__evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
+        val_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
+        train_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
         sess_config = self._get_tf_session_config()
         with tf.Session(config=sess_config) as sess:
             with tf.device("/gpu:{}".format(self.__get_gpu_to_use())):
@@ -64,8 +64,8 @@ class TrainingExecutor(GraphExecutor):
             loss_acc = self.__get_average_loss_op(loss_acc)
             train_op = optimizer.apply_gradients(grads_acc)
             with tf.device("/gpu:{}".format(self.__get_primary_gpu())):
-                val_set_miou_ops = self.__build_inter_training__evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
-                train_set_miou_ops = self.__build_inter_training__evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
+                val_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
+                train_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
             sess_config = self._get_tf_session_config()
             with tf.Session(config=sess_config) as sess:
                 self.__train_loop(sess, iterator, loss_acc, train_op, val_set_miou_ops, train_set_miou_ops)
@@ -121,12 +121,12 @@ class TrainingExecutor(GraphExecutor):
         loss = tf.stack(loss, axis=0)
         return tf.reduce_mean(loss, axis=0)
 
-    def __build_inter_training__evaluation_graph(self, iterator_type: IteratorType) -> Tuple[tf.data.Iterator, tf.Operation, tf.Operation]:
+    def __build_inter_training_evaluation_graph(self, iterator_type: IteratorType) -> Tuple[tf.data.Iterator, tf.Operation, tf.Operation]:
         with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
             iterator = self._iterator_factory.get_iterator(iterator_type)
             X, y = iterator.get_next()
             with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
-                model_out = self._model.run(X, self._config.num_classes, is_training=False)
+                model_out, _ = self._model.run(X, self._config.num_classes, is_training=False)
             prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
             weights = tf.to_float(tf.not_equal(y, 0))
             mean_iou, mean_iou_update = tf.metrics.mean_iou(prediction, y, self._config.num_classes, weights=weights)

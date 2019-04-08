@@ -23,7 +23,9 @@ class InferenceSpeedTestExecutor(GraphExecutor):
         config = self._get_tf_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
+                print('Restoring model: {}'.format(self._config.checkpoint_name))
                 saver.restore(sess, self._config.checkpoint_name)
+                print('Restoring model: [DONE]')
                 self.__proceed_time_inference_test(sess, prediction)
 
     def _get_iterator_type(self) -> IteratorType:

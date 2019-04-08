@@ -6,9 +6,13 @@ from src.common.ConfigReader import ConfigReader
 
 class GraphExecutorConfigReader(ConfigReader):
 
-    def __init__(self, config_path= Union[str, None], reader_type: str = 'train'):
+    def __init__(self, config_path: Union[str, None], reader_type: str = 'train'):
         self.__reader_type = reader_type
         super().__init__(config_path)
+        if config_path is None:
+            self.__config_path = self._get_default_config_path()
+        else:
+            self.__config_path = config_path
 
     def get_config_path(self) -> str:
         return self.__config_path
