@@ -43,7 +43,7 @@ class StreamInferenceUtil:
     def __build_feedable_graph(self) -> Tuple[tf.placeholder, tf.Tensor]:
         inference_size = self.__config.destination_size
         X = tf.placeholder(tf.float32, shape=[1, inference_size[1], inference_size[0], 3])
-        model_out = self.__model.run(X, self.__config.num_classes, False)
+        model_out, _ = self.__model.run(X, self.__config.num_classes, False)
         return X, model_out
 
     def __proceed_inference_on_video_stream(self, sess, X_placeholder, prediction):

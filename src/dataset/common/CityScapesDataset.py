@@ -53,9 +53,9 @@ class CityScapesDataset:
         num_cpu = multiprocessing.cpu_count()
         dataset = tf.data.TFRecordDataset(tfrecords_filenames, num_parallel_reads=num_cpu)
         dataset = dataset.map(self.__parse, num_parallel_calls=num_cpu)
-        dataset = dataset.shuffle(buffer_size=num_cpu * batch_size)
+        dataset = dataset.shuffle(buffer_size=8 * batch_size)
         dataset = dataset.batch(batch_size=batch_size)
-        dataset = dataset.prefetch(num_cpu * batch_size)
+        dataset = dataset.prefetch(8 * batch_size)
         return dataset
 
     def __compose_one_shot_iterator_from_tfrecords(self, tfrecords_filenames: List[str], batch_size: int) -> tf.data.Iterator:
