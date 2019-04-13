@@ -53,7 +53,7 @@ class DatasetPreprocessor:
 
     def __map_paths_to_tuples_with_extracted_name(self, path: str) -> Tuple[str, str]:
         file_name = path.split('/')[-1]
-        pattern = "^([a-zA-Z]+_[0-9]{6}_[0-9]{6})_.*$"
+        pattern = "^([a-zA-Z-]+_[0-9]{6}_[0-9]{6})_.*$"
         match = re.match(pattern, file_name).group(1)
         return match, path
 
@@ -76,6 +76,7 @@ class DatasetPreprocessor:
         colour_to_id = get_colour_to_id_mapping(self.__config.mapping_file)
         batch_size = self.__config.binary_batch_size
         processes = []
+        active_workers = 0
         for i in range(0, int(math.ceil(paths_list_len / batch_size))):
             if (i + 1) * batch_size < paths_list_len:
                 chunk = files_list[i * batch_size:(i + 1) * batch_size]
@@ -85,11 +86,19 @@ class DatasetPreprocessor:
             process.start()
             processes.append((i, process))
             print('Task for creating {}-th {} batch just started.'.format(i, subset_name))
-        for task_id, process in processes:
-            process.join()
-            print('Task for creating {}-th {} batch just finished.'.format(i, subset_name))
+            active_workers += 1
+            if active_workers >= self.__config.max_workers:
+                self.__join_all_active_processes(processes, subset_name)
+                process = []
+                active_workers = 0
+        self.__join_all_active_processes(process, subset_name)
         print('Finished creating *.tfrecords for {} subset'.format(subset_name))
         print('========================================================================')
+
+    def __join_all_active_processes(self, processes: List[Tuple[int, Process]], subset_name: str) -> None:
+        for task_id, process in processes:
+            process.join()
+            print('Task for creating {}-th {} batch just finished.'.format(task_id, subset_name))
 
     def __prepare_tfrecords_batch(self, subset_name: str, batch_id: int, data: List[Tuple[str, str]],
                                   colour_to_id: Dict[Tuple[int, int, int], int]) -> None:
