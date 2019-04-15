@@ -23,7 +23,7 @@ class DatasetPreprocessor:
 
     def transform_dataset(self) -> None:
         create_directory(self.__config.output_tfrecords_dir)
-        self.__transform_dataset_subset('train')
+        # self.__transform_dataset_subset('train')
         self.__transform_dataset_subset('val')
 
     def __transform_dataset_subset(self, subset_name: str) -> None:
@@ -89,9 +89,9 @@ class DatasetPreprocessor:
             active_workers += 1
             if active_workers >= self.__config.max_workers:
                 self.__join_all_active_processes(processes, subset_name)
-                process = []
+                processes = []
                 active_workers = 0
-        self.__join_all_active_processes(process, subset_name)
+        self.__join_all_active_processes(processes, subset_name)
         print('Finished creating *.tfrecords for {} subset'.format(subset_name))
         print('========================================================================')
 
