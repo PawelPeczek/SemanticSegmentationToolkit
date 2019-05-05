@@ -5,18 +5,19 @@ mapping_file: 'mappings.yaml'
 destination_size: [2048, 1024]
 tfrecords_base_name: 'city-scapes.tfrecords'
 optimizer_options:
-  optimizer_name: 'Adam'
+  optimizer_name: 'AdamW'
   learning_rate: 0.001
-model_name: 'ICNetV4'
+  weight_decay: 0.00001
+model_name: 'ICNetV6'
 num_classes: 20
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
 batch_size: 6
 gpu_to_use: [0, 1]
 epochs: 10000
-increase_saving_frequency_loss_treshold: 0.2
+increase_saving_frequency_loss_treshold: 0.1
 saving_frequency: 30
-measure_train_accuracy: False
+measure_train_accuracy: True
 measure_train_accuracy_frequency: 30
 measure_val_accuracy: True
 measure_val_accuracy_frequency: 30
