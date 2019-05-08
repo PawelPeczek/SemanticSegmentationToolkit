@@ -7,12 +7,12 @@ tfrecords_base_name: 'city-scapes.tfrecords'
 optimizer_options:
   optimizer_name: 'AdamW'
   learning_rate: 0.001
-  weight_decay: 0.00001
-model_name: 'ICNetV6'
+  weight_decay: 0.0001
+model_name: 'ICNetV7'
 num_classes: 20
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
-batch_size: 6
+batch_size: 5
 gpu_to_use: [0, 1]
 epochs: 10000
 increase_saving_frequency_loss_treshold: 0.1

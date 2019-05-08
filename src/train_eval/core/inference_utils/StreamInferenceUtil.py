@@ -49,16 +49,23 @@ class StreamInferenceUtil:
     def __proceed_inference_on_video_stream(self, sess, X_placeholder, prediction):
         video_file_path = self.__config.input_video
         video = cv.VideoCapture(video_file_path)
+        saver = None
+        if self.__config.persist_video is True:
+            saver = cv.VideoWriter(self.__config.output_video_file, cv.VideoWriter_fourcc(*'DIVX'),  25,
+                                   (self.__config.destination_size[0], self.__config.destination_size[1]))
         while True:
             success, frame = video.read()
             if not success:
                 break
-            cv.imshow('Original video', frame)
             frame = np.expand_dims(frame, axis=0)
             prediction_eval = sess.run(prediction, feed_dict={X_placeholder: frame})
-            print(prediction_eval[0].shape)
-            cv.imshow('Infered video', prediction_eval[0].copy())
+            overlay = cv.addWeighted(frame, 0.5, prediction_eval, 0.5, 0)
+            cv.imshow('Infered video', overlay[0].copy())
+            if self.__config.persist_video is True:
+                saver.write(overlay[0])
             cv.waitKey(1)
+        if self.__config.persist_video is True:
+            saver.release()
 
     def __prepare_storage(self):
         if self.__config.persist_video:
