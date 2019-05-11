@@ -13,7 +13,8 @@ num_classes: 20
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
 batch_size: 5
-gpu_to_use: [0, 1]
+#gpu_to_use: [0, 1]
+gpu_to_use: 0
 epochs: 10000
 increase_saving_frequency_loss_treshold: 0.1
 saving_frequency: 30
@@ -22,3 +23,16 @@ measure_train_accuracy_frequency: 30
 measure_val_accuracy: True
 measure_val_accuracy_frequency: 30
 dummy_iterator_tfrecords_files: 1
+radnom_data_transformation: True
+data_transoformation_options:
+  application_probability: 0.5
+  transformation_chain: [
+    'adjust_contrast', 'adjust_brightness', 'gaussian_noise', 'horizontal_flip', 'crop_and_scale', 'rotation'
+  ]
+  adjust_contrast_probability: 0.4
+  adjust_brightness_probability: 0.4
+  gaussian_noise_probability: 0.4
+  horizontal_flip_probability: 0.35
+  crop_and_scale_probability: 0.35
+  rotation_probability: 0.25
+

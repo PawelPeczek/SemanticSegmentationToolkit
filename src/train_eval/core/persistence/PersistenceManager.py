@@ -21,6 +21,7 @@ class PersistenceManager(ABC):
         self._profiling_path = self.__generate_model_profiling_dir_path()
         self._model_inference_results_path = self.__generate_model_inference_results_dir_path()
         self._graph_summary_path = self.__generate_graph_summary_path()
+        self._dataset_transformation_test_path = self.__generate_dataset_transformation_test_path()
         self._prepare_storage()
 
     def log_loss(self, epoch: int, loss_value: float, train_acc: float = -1.0, val_acc: float = -1.0) -> None:
@@ -49,6 +50,10 @@ class PersistenceManager(ABC):
         rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
         return os.path.join(self._config.model_dir, rand_name)
 
+    def generate_random_transformation_test_image_path(self) -> str:
+        rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
+        return os.path.join(self._dataset_transformation_test_path, rand_name)
+
     def save_profiling_trace(self, trace: str) -> None:
         timestamp = self._get_current_timestamp()
         trace_file_path = os.path.join(self._profiling_path, 'profiling_trace_{}.json'.format(timestamp))
@@ -70,6 +75,7 @@ class PersistenceManager(ABC):
         create_directory(self._profiling_path)
         create_directory(self._model_inference_results_path)
         create_directory(self._graph_summary_path)
+        create_directory(self._dataset_transformation_test_path)
 
     def _get_current_timestamp(self) -> str:
         return datetime.now().strftime("%Y_%m_%d_%H:%M")
@@ -86,6 +92,8 @@ class PersistenceManager(ABC):
     def __generate_model_inference_results_dir_path(self) -> str:
         return os.path.join(self._model_directory_path, 'model_inference')
 
-    def __generate_graph_summary_path(self):
+    def __generate_graph_summary_path(self) -> str:
         return os.path.join(self._model_directory_path, 'graph_summary')
 
+    def __generate_dataset_transformation_test_path(self) -> str:
+        return os.path.join(self._model_directory_path, 'dataset_transformation_test')
