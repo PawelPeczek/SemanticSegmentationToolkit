@@ -8,15 +8,15 @@ optimizer_options:
   optimizer_name: 'AdamW'
   learning_rate: 0.001
   weight_decay: 0.0001
-model_name: 'ICNetV7'
+model_name: 'ICNetV8'
 num_classes: 20
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
-batch_size: 5
-#gpu_to_use: [0, 1]
-gpu_to_use: 0
+batch_size: 7
+gpu_to_use: [0, 1]
+#gpu_to_use: 0
 epochs: 10000
-increase_saving_frequency_loss_treshold: 0.1
+increase_saving_frequency_loss_treshold: 0.25
 saving_frequency: 30
 measure_train_accuracy: True
 measure_train_accuracy_frequency: 30

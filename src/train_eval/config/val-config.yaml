@@ -4,9 +4,9 @@ tfrecords_dir: 'tfrecords-full-size'
 mapping_file: 'mappings.yaml'
 tfrecords_base_name: 'city-scapes.tfrecords'
 destination_size: [2048, 1024]
-model_name: 'ICNetV6'
+model_name: 'ICNetV8'
 num_classes: 20
-model_dir: '/archive/model_storage/big_images_model/icnet_v6_2019_05_06_00:15'
+model_dir: '/archive/model_storage/big_images_model/icnet_v8_2019_05_12_07:44'
 checkpoint_name: 'checkpoint.ckpt-1'
 batch_size: 1
 dummy_iterator_tfrecords_files: 'all'

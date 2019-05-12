@@ -7,6 +7,7 @@ from src.model.normal_input_model.ICNetV4 import ICNetV4
 from src.model.normal_input_model.ICNetV5 import ICNetV5
 from src.model.normal_input_model.ICNetV6 import ICNetV6
 from src.model.normal_input_model.ICNetV7 import ICNetV7
+from src.model.normal_input_model.ICNetV8 import ICNetV8
 from src.model.small_input_model.ThickModel import ThickModel
 from src.model.small_input_model.ThinModelV1 import ThinModelV1
 from src.model.small_input_model.ThinModelV2 import ThinModelV2
@@ -38,7 +39,8 @@ class SegmentationModelFactory:
             'ICNetV4': ICNetV4(),
             'ICNetV5': ICNetV5(),
             'ICNetV6': ICNetV6(),
-            'ICNetV7': ICNetV7()
+            'ICNetV7': ICNetV7(),
+            'ICNetV8': ICNetV8()
         }
         return gallery
 
