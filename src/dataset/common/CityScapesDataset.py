@@ -64,9 +64,9 @@ class CityScapesDataset:
         if use_augmentation is True:
             dataset_transformer = DatasetTransformer(self.__config)
             dataset = dataset.map(dataset_transformer.augment_data, num_parallel_calls=num_cpu)
-        dataset = dataset.shuffle(buffer_size=16 * batch_size)
+        dataset = dataset.shuffle(buffer_size=8 * batch_size)
         dataset = dataset.batch(batch_size=batch_size)
-        dataset = dataset.prefetch(16 * batch_size)
+        dataset = dataset.prefetch(8 * batch_size)
         return dataset
 
     def __compose_initializable_iterator_from_tfrecords(self, tfrecords_filenames: List[str], batch_size: int,  use_augmentation: bool = False) -> tf.data.Iterator:

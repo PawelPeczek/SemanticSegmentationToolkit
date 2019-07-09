@@ -1,6 +1,10 @@
 from typing import Dict
 
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
+from src.model.normal_input_model.ICNetV10 import ICNetV10
+from src.model.normal_input_model.ICNetV11 import ICNetV11
+from src.model.normal_input_model.ICNetV12 import ICNetV12
+from src.model.normal_input_model.ICNetV13 import ICNetV13
 from src.model.normal_input_model.ICNetV2 import ICNetV2
 from src.model.normal_input_model.ICNetV3 import ICNetV3
 from src.model.normal_input_model.ICNetV4 import ICNetV4
@@ -8,6 +12,9 @@ from src.model.normal_input_model.ICNetV5 import ICNetV5
 from src.model.normal_input_model.ICNetV6 import ICNetV6
 from src.model.normal_input_model.ICNetV7 import ICNetV7
 from src.model.normal_input_model.ICNetV8 import ICNetV8
+from src.model.normal_input_model.ICNetV9 import ICNetV9
+from src.model.normal_input_model.MPPNet import MPPNet
+from src.model.normal_input_model.OriginalICNet import OriginalICNet
 from src.model.small_input_model.ThickModel import ThickModel
 from src.model.small_input_model.ThinModelV1 import ThinModelV1
 from src.model.small_input_model.ThinModelV2 import ThinModelV2
@@ -40,7 +47,14 @@ class SegmentationModelFactory:
             'ICNetV5': ICNetV5(),
             'ICNetV6': ICNetV6(),
             'ICNetV7': ICNetV7(),
-            'ICNetV8': ICNetV8()
+            'ICNetV8': ICNetV8(),
+            'OriginalICNet': OriginalICNet(),
+            'ICNetV9': ICNetV9(),
+            'ICNetV10': ICNetV10(),
+            'MPPNet': MPPNet(),
+            'ICNetV11': ICNetV11(),
+            'ICNetV12': ICNetV12(),
+            'ICNetV13': ICNetV13()
         }
         return gallery
 

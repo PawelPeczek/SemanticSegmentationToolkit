@@ -13,12 +13,11 @@ class VisualisationExecutor(GraphExecutor):
         super().__init__(descriptive_name, config)
 
     def execute(self) -> None:
-        _, model_out, _, _ = self._build_computation_graph()
+        _, (model_out, _), _, _ = self._build_computation_graph()
         config = self._get_tf_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 sess.run(tf.global_variables_initializer())
-                sess.run(model_out)
                 self._persistence_manager.save_graph_summary(sess.graph)
         self.__print_tensorboard_start_command()
 

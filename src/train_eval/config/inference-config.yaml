@@ -1,9 +1,9 @@
 mapping_file: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
 destination_size: [2048, 1024]
-model_name: 'ICNetV4'
+model_name: 'ICNetV10'
 num_classes: 20
-model_dir: '/archive/model_storage/big_images_model/icnet_v4_full_augmented_2019_05_11_18:51'
-checkpoint_name: 'checkpoint.ckpt-150'
+model_dir: '/archive/model_storage/big_images_model/icnet_v10_augmented_training_2019_07_04_15:07'
+checkpoint_name: 'checkpoint.ckpt-240'
 gpu_to_use: 0
 input_video: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/big_stuttgart_01.avi'
 persist_video: True

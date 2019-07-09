@@ -23,7 +23,7 @@ class DatasetPreprocessor:
 
     def transform_dataset(self) -> None:
         create_directory(self.__config.output_tfrecords_dir)
-        # self.__transform_dataset_subset('train')
+        self.__transform_dataset_subset('train')
         self.__transform_dataset_subset('val')
 
     def __transform_dataset_subset(self, subset_name: str) -> None:

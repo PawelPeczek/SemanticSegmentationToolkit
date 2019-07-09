@@ -8,15 +8,15 @@ optimizer_options:
   optimizer_name: 'AdamW'
   learning_rate: 0.001
   weight_decay: 0.0001
-model_name: 'ICNetV8'
+model_name: 'ICNetV11'
 num_classes: 20
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
-batch_size: 7
+batch_size: 12
 gpu_to_use: [0, 1]
 #gpu_to_use: 0
 epochs: 10000
-increase_saving_frequency_loss_treshold: 0.25
+increase_saving_frequency_loss_treshold: 0.15
 saving_frequency: 30
 measure_train_accuracy: True
 measure_train_accuracy_frequency: 30
@@ -25,14 +25,14 @@ measure_val_accuracy_frequency: 30
 dummy_iterator_tfrecords_files: 1
 radnom_data_transformation: True
 data_transoformation_options:
-  application_probability: 0.5
+  application_probability: 0.2
   transformation_chain: [
     'adjust_contrast', 'adjust_brightness', 'gaussian_noise', 'horizontal_flip', 'crop_and_scale', 'rotation'
   ]
-  adjust_contrast_probability: 0.4
-  adjust_brightness_probability: 0.4
-  gaussian_noise_probability: 0.4
-  horizontal_flip_probability: 0.35
-  crop_and_scale_probability: 0.35
-  rotation_probability: 0.25
+  adjust_contrast_probability: 0.2
+  adjust_brightness_probability: 0.15
+  gaussian_noise_probability: 0.15
+  horizontal_flip_probability: 0.2
+  crop_and_scale_probability: 0.2
+  rotation_probability: 0.15
 
