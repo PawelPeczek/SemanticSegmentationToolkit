@@ -21,9 +21,13 @@ class StreamInferenceUtil:
     def infer_on_video_stream(self) -> None:
         params = self.__prepare_prediction_to_color_mapping()
         X_placeholder, model_out = self.__build_feedable_graph()
+        print(model_out.shape)
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
+        print(prediction.shape)
         prediction = tf.gather(params, prediction)
+        print(prediction.shape)
         prediction = tf.cast(prediction, dtype=tf.uint8)
+        print(prediction.shape)
         saver = tf.train.Saver()
         config = tf.ConfigProto(allow_soft_placement=True,
                                 log_device_placement=False)
@@ -59,7 +63,7 @@ class StreamInferenceUtil:
                 break
             frame = np.expand_dims(frame, axis=0)
             prediction_eval = sess.run(prediction, feed_dict={X_placeholder: frame})
-            overlay = cv.addWeighted(frame, 0.5, prediction_eval, 0.5, 0)
+            overlay = cv.addWeighted(frame, 0.1, prediction_eval, 0.9, 0)
             cv.imshow('Infered video', overlay[0].copy())
             if self.__config.persist_video is True:
                 saver.write(overlay[0])

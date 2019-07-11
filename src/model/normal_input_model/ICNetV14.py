@@ -5,7 +5,7 @@ import tensorflow as tf
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 
 
-class ICNetV12(SemanticSegmentationModel):
+class ICNetV14(SemanticSegmentationModel):
 
     def run(self, X: tf.Tensor, num_classes: int, is_training: bool = True, y: Optional[tf.Tensor] = None) -> Tuple[
         tf.Tensor, Optional[tf.Tensor]]:
@@ -165,7 +165,15 @@ class ICNetV12(SemanticSegmentationModel):
         conv_19b = conv_19b + conv_19
         add_3 = tf.math.add(conv_19b, add_2)
 
-        return add_3
+        conv_20 = tf.layers.conv2d(add_3, 2048, (3, 3), padding='SAME', activation='relu',
+                                   name='small_branch_conv_20')
+        conv_21 = self.__filters_scaling(conv_20, 512, name='small_branch_conv_21')
+        conv_22 = tf.layers.conv2d(conv_21, 2048, (3, 3), padding='SAME',
+                                   activation='relu',
+                                   name='small_branch_conv_22')
+        conv_23 = self.__filters_scaling(conv_22, 256,
+                                         name='small_branch_conv_23')
+        return add_3 + conv_23
 
     def __dilated_block(self, X: tf.Tensor, output_filters: int, dim_red: bool = True,
                         residual: bool = True) -> tf.Tensor:
@@ -194,8 +202,8 @@ class ICNetV12(SemanticSegmentationModel):
 
     def __pyramid_pooling(self, X: tf.Tensor, num_filters: int) -> tf.Tensor:
         pool_1 = tf.nn.pool(X, [2, 2], 'AVG', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
-        pool_2 = tf.nn.pool(X, [3, 3], 'AVG', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
-        pool_3 = tf.nn.pool(X, [5, 5], 'AVG', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
+        pool_2 = tf.nn.pool(X, [5, 5], 'AVG', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
+        pool_3 = tf.nn.pool(X, [8, 8], 'AVG', 'SAME', dilation_rate=[1, 1], strides=[2, 2])
         concat = tf.concat([pool_1, pool_2, pool_3], axis=-1)
         out = tf.layers.conv2d(concat, num_filters, (3, 3), padding='SAME', activation='relu')
         return out

@@ -1,7 +1,8 @@
 from typing import Dict, Tuple
 import matplotlib.pyplot as plt
 import tensorflow as tf
-
+import cv2 as cv
+import numpy as np
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
 from src.dataset.utils.mapping_utils import get_id_to_colour_mapping, map_colour
 from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
@@ -40,16 +41,35 @@ class DatasetTransformationTestExecutor(GraphExecutor):
 
     def __proceed_inference_on_batch(self, sess: tf.Session, image: tf.Tensor, label: tf.Tensor,
                                      mappings: Dict[int, Tuple[int, int, int]]) -> None:
+        print('DUPA')
+        params = self.__prepare_prediction_to_color_mapping()
+        label = tf.expand_dims(label, axis=-1)
+        label = tf.image.resize_nearest_neighbor(label, (256, 512))
+        label = tf.squeeze(label, axis=-1)
+        label = tf.gather(params, label)
+        print(label.shape)
+        label = tf.cast(label, dtype=tf.uint8)
+        # label = tf.expand_dims(label, axis=-1)
+        # label = tf.image.resize_nearest_neighbor(label, (512, 1024))
+        # label = tf.squeeze(label, axis=-1)
         base, gt = sess.run([image, label])
-        fig = plt.figure(figsize=(20, 40))
+
+        # fig = plt.figure(figsize=(20, 40))
         for i in range(0, base.shape[0]):
-            to_show = base[i][..., ::-1]
-            fig.add_subplot(base.shape[0], 2, 2 * i + 1)
-            plt.imshow(to_show)
-            fig.add_subplot(base.shape[0], 2, 2 * i + 2)
+        #     to_show = base[i][..., ::-1]
+        #     fig.add_subplot(base.shape[0], 2, 2 * i + 1)
+        #     plt.imshow(to_show)
+        #     fig.add_subplot(base.shape[0], 2, 2 * i + 2)
             ground_truth = gt[i]
-            ground_truth = map_colour(ground_truth, mappings)
-            plt.imshow(ground_truth)
-        image_path = self._persistence_manager.generate_random_transformation_test_image_path()
-        plt.savefig(image_path)
-        plt.close()
+            print(ground_truth)
+
+            cv.imshow('dupa', ground_truth.copy())
+            cv.waitKey(1)
+        #     plt.imshow(ground_truth)
+        # image_path = self._persistence_manager.generate_random_transformation_test_image_path()
+        # plt.savefig(image_path)
+        # plt.close()
+
+    def __prepare_prediction_to_color_mapping(self) -> np.ndarray:
+        mappings = get_id_to_colour_mapping(self._config.mapping_file)
+        return np.array([(0, 0, 0)] + list(mappings.values()))

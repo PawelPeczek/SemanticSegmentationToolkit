@@ -46,7 +46,7 @@ class ICNetV11(SemanticSegmentationModel):
                                                                        num_classes=num_classes)
         print('medium_big_fused {}'.format(medium_big_fused.shape))
         upsample_2_size = medium_big_fused.shape[1] * 2, medium_big_fused.shape[2] * 2
-        upsampled_2 = tf.image.resize_bilinear(medium_big_fused, upsample_2_size)
+        upsampled_2 = tf.image.resize_bilinear(medium_big_fused, upsample_2_size, align_corners=True)
         upsampled_2 = tf.layers.conv2d(upsampled_2, num_classes, (1, 1), padding='SAME', activation=None)
         print('upsampled_2 {}'.format(upsampled_2.shape))
         one_fourth_label = None
@@ -56,10 +56,9 @@ class ICNetV11(SemanticSegmentationModel):
             one_fourth_label = tf.squeeze(one_fourth_label, axis=-1)
             one_fourth_label = tf.cast(one_fourth_label, dtype=tf.int32)
             print('one_fourth_label {}'.format(one_fourth_label.shape))
-            intermediate_classifier = self.__filters_scaling(upsampled_2, num_classes, 'cascade_classfier_one_fourth')
-            cascade_loss_3 = self.__compute_loss(intermediate_classifier, one_fourth_label)
+            cascade_loss_3 = self.__compute_loss(upsampled_2, one_fourth_label)
         upsample_4_size = upsampled_2.shape[1] * 4, upsampled_2.shape[2] * 4
-        classifier = tf.image.resize_bilinear(upsampled_2, upsample_4_size)
+        classifier = tf.image.resize_bilinear(upsampled_2, upsample_4_size, align_corners=True)
         overall_loss = None
         if is_training:
             cascade_loss_1 = tf.reduce_mean(cascade_loss_1)
@@ -199,7 +198,7 @@ class ICNetV11(SemanticSegmentationModel):
                                label: Optional[tf.Tensor] = None, num_classes: Optional[int] = None) -> Tuple[
         tf.Tensor, tf.Tensor]:
         upsample_size = smaller_input.shape[1] * 2, smaller_input.shape[2] * 2
-        upsampled = tf.image.resize_bilinear(smaller_input, upsample_size)
+        upsampled = tf.image.resize_bilinear(smaller_input, upsample_size, align_corners=True)
         cascade_loss = None
         if is_training:
             intermediate_classifier = self.__filters_scaling(upsampled, num_classes,

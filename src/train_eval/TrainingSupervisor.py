@@ -23,11 +23,11 @@ class TrainingSupervisor(ExecutionSupervisor):
             print('Failed to proceed overfitting training. {}'.format(ex))
 
     def visualise_data_augmentation(self, descriptive_name: str, config_path: Union[str, None] = None) -> None:
-        try:
-            config = GraphExecutorConfigReader(config_path)
-            self._execute_graph_operation_pipeline(GraphExecutorType.TEST_DATA_TRANSFORMATION, descriptive_name, config)
-        except Exception as ex:
-            print('Failed to proceed data augmentation visualisation. {}'.format(ex))
+        # try:
+        config = GraphExecutorConfigReader(config_path)
+        self._execute_graph_operation_pipeline(GraphExecutorType.TEST_DATA_TRANSFORMATION, descriptive_name, config)
+        # except Exception as ex:
+        #     print('Failed to proceed data augmentation visualisation. {}'.format(ex))
 
 
 if __name__ == '__main__':

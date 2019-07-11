@@ -5,6 +5,8 @@ from src.model.normal_input_model.ICNetV10 import ICNetV10
 from src.model.normal_input_model.ICNetV11 import ICNetV11
 from src.model.normal_input_model.ICNetV12 import ICNetV12
 from src.model.normal_input_model.ICNetV13 import ICNetV13
+from src.model.normal_input_model.ICNetV14 import ICNetV14
+from src.model.normal_input_model.ICNetV15 import ICNetV15
 from src.model.normal_input_model.ICNetV2 import ICNetV2
 from src.model.normal_input_model.ICNetV3 import ICNetV3
 from src.model.normal_input_model.ICNetV4 import ICNetV4
@@ -54,7 +56,9 @@ class SegmentationModelFactory:
             'MPPNet': MPPNet(),
             'ICNetV11': ICNetV11(),
             'ICNetV12': ICNetV12(),
-            'ICNetV13': ICNetV13()
+            'ICNetV13': ICNetV13(),
+            'ICNetV14': ICNetV14(),
+            'ICNetV15': ICNetV15()
         }
         return gallery
 
