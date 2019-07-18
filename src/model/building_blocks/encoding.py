@@ -8,7 +8,7 @@ from src.model.building_blocks.errors import AtrousPyramidEncoderError, \
 from src.model.building_blocks.utils import prepare_block_operation_name
 from src.model.layers.conv import dim_hold_conv2d, bottleneck_conv2d, \
     separable_bottleneck_conv2d, atrous_separable_conv2d, atrous_conv2d, \
-    separable_conv2d
+    separable_conv2d, downsample_conv2d
 from src.model.layers.pooling import FusionMethod
 
 
@@ -294,17 +294,25 @@ def _blending_layer(x: tf.Tensor,
 
 def residual_conv_encoder(x: tf.Tensor,
                           output_filters: Tuple[int, int, int],
+                          input_stride: int = 1,
                           dilation_rate: int = 1,
+                          project_input: bool = True,
                           use_relu_at_output: bool = True,
-                          name: Optional[str] = None) -> tf.Tensor:
-    projection_conv = _projection_conv(x, output_filters[-1], name)
+                          name: Optional[str] = None,
+                          is_training: bool = True) -> tf.Tensor:
     increased = _reduce_conv_increase_block(
         x=x,
         output_filters=output_filters,
+        input_stride=input_stride,
         dilation_rate=dilation_rate,
+        is_training=is_training,
         name=name
     )
-    sum = tf.add(projection_conv, increased, name=name)
+    if project_input is True:
+        projection_conv = _projection_conv(x, output_filters[-1], name)
+        sum = tf.add(projection_conv, increased, name=name)
+    else:
+        sum = tf.add(x, increased, name=name)
     if not use_relu_at_output:
         return sum
     if name is not None:
@@ -326,60 +334,93 @@ def _projection_conv(x: tf.Tensor,
 
 def _reduce_conv_increase_block(x: tf.Tensor,
                                 output_filters: Tuple[int, int, int],
+                                input_stride: int,
                                 dilation_rate: int,
+                                is_training: bool,
                                 name: Optional[str]) -> tf.Tensor:
     reduced = _reduce_conv(
         x=x,
         filters=output_filters[0],
+        input_stride=input_stride,
+        is_training=is_training,
         name=name)
     internal_conv = _internal_conv3x3(
         x=reduced,
         filters=output_filters[1],
         dilation_rate=dilation_rate,
+        is_training=is_training,
         name=name)
     return _increase_conv(
         x=internal_conv,
         filters=output_filters[-1],
+        is_training=is_training,
         name=name)
 
 
 def _reduce_conv(x: tf.Tensor,
                  filters: int,
+                 input_stride: int,
+                 is_training: bool,
                  name: Optional[str]) -> tf.Tensor:
+    bn_name, conv_name = None, None
     if name is not None:
-        name = prepare_block_operation_name(name, '1x1_reduce', 'relu')
-    return bottleneck_conv2d(
-        x=x,
-        num_filters=filters,
-        name=name
-    )
+        conv_name = prepare_block_operation_name(name, '1x1_reduce', 'relu')
+        bn_name = prepare_block_operation_name(name, '1x1_reduce', 'bn')
+    if input_stride > 1:
+        stride = input_stride, input_stride
+        conv = downsample_conv2d(
+            x=x,
+            num_filters=filters,
+            kernel_size=(1, 1),
+            strides=stride,
+            name=conv_name)
+    else:
+        conv = bottleneck_conv2d(
+            x=x,
+            num_filters=filters,
+            name=conv_name)
+    return tf.layers.batch_normalization(
+        inputs=conv,
+        training=is_training,
+        name=bn_name)
 
 
 def _internal_conv3x3(x: tf.Tensor,
                       filters: int,
                       dilation_rate: int,
+                      is_training: bool,
                       name: Optional[str]) -> tf.Tensor:
+    bn_name, conv_name = None, None
     if name is not None:
-        name = prepare_block_operation_name(name, '3x3', 'relu')
+        conv_name = prepare_block_operation_name(name, '3x3', 'relu')
+        bn_name = prepare_block_operation_name(name, '3x3', 'bn')
     dilation_rate = dilation_rate, dilation_rate
-    return atrous_conv2d(
+    conv = atrous_conv2d(
         x=x,
         num_filters=filters,
         kernel_size=(3, 3),
         dilation_rate=dilation_rate,
-        name=name
-    )
+        name=conv_name)
+    return tf.layers.batch_normalization(
+        inputs=conv,
+        training=is_training,
+        name=bn_name)
 
 
 def _increase_conv(x: tf.Tensor,
                    filters: int,
+                   is_training: bool,
                    name: Optional[str]) -> tf.Tensor:
+    bn_name, conv_name = None, None
     if name is not None:
-        name = prepare_block_operation_name(name, '1x1_increase')
-    return bottleneck_conv2d(
+        conv_name = prepare_block_operation_name(name, '1x1_increase')
+        bn_name = prepare_block_operation_name(name, '1x1_increase', 'bn')
+    conv = bottleneck_conv2d(
         x=x,
         num_filters=filters,
         activation=None,
-        name=name
-    )
-
+        name=conv_name)
+    return tf.layers.batch_normalization(
+        inputs=conv,
+        training=is_training,
+        name=bn_name)
