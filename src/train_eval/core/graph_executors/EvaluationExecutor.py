@@ -21,7 +21,7 @@ class EvaluationExecutor(GraphExecutor):
         weights = tf.to_float(tf.not_equal(y, 0))
         mean_iou, mean_iou_update = tf.metrics.mean_iou(prediction, y, self._config.num_classes, weights=weights)
         saver = tf.train.Saver()
-        config = self._get_tf_session_config()
+        config = self._get_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 sess.run(tf.initializers.variables(tf.local_variables()))

@@ -20,7 +20,7 @@ class InferenceExecutor(GraphExecutor):
         X_casted = tf.cast(X, tf.uint8)
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         saver = tf.train.Saver()
-        config = self._get_tf_session_config()
+        config = self._get_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 saver.restore(sess, self._config.checkpoint_name)

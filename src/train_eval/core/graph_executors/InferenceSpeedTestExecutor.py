@@ -20,7 +20,7 @@ class InferenceSpeedTestExecutor(GraphExecutor):
         _, (model_out, _), _, _ = self._build_computation_graph()
         prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
         saver = tf.train.Saver()
-        config = self._get_tf_session_config()
+        config = self._get_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 print('Restoring model: {}'.format(self._config.checkpoint_name))

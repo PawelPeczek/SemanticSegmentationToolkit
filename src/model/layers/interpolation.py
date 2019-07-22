@@ -5,7 +5,7 @@ import tensorflow as tf
 
 def upsample_bilinear(x: tf.Tensor,
                       zoom_factor: int,
-                      name: Optional[str]) -> tf.Tensor:
+                      name: Optional[str] = None) -> tf.Tensor:
     return _interpolate(
         x=x,
         resize_factor=zoom_factor,
@@ -15,7 +15,7 @@ def upsample_bilinear(x: tf.Tensor,
 
 def upsample_nn(x: tf.Tensor,
                 zoom_factor: int,
-                name: Optional[str]) -> tf.Tensor:
+                name: Optional[str] = None) -> tf.Tensor:
     return _interpolate(
         x=x,
         resize_factor=zoom_factor,
@@ -25,7 +25,7 @@ def upsample_nn(x: tf.Tensor,
 
 def downsample_bilinear(x: tf.Tensor,
                         shrink_factor: int,
-                        name: Optional[str]) -> tf.Tensor:
+                        name: Optional[str] = None) -> tf.Tensor:
     resize_factor = 1 / shrink_factor
     return _interpolate(
         x=x,
@@ -36,7 +36,7 @@ def downsample_bilinear(x: tf.Tensor,
 
 def downsample_nn(x: tf.Tensor,
                   shrink_factor: int,
-                  name: Optional[str]) -> tf.Tensor:
+                  name: Optional[str] = None) -> tf.Tensor:
     resize_factor = 1 / shrink_factor
     return _interpolate(
         x=x,
@@ -67,7 +67,7 @@ def _interpolate(x: tf.Tensor,
 def resize_bilinear(x: tf.Tensor,
                     height: Union[int, tf.Dimension],
                     width: Union[int, tf.Dimension],
-                    name: Optional[str]) -> tf.Tensor:
+                    name: Optional[str] = None) -> tf.Tensor:
     return _resize(
         x=x,
         height=height,
@@ -79,7 +79,7 @@ def resize_bilinear(x: tf.Tensor,
 def resize_nn(x: tf.Tensor,
               height: Union[int, tf.Dimension],
               width: Union[int, tf.Dimension],
-              name: Optional[str]) -> tf.Tensor:
+              name: Optional[str] = None) -> tf.Tensor:
     return _resize(
         x=x,
         height=height,

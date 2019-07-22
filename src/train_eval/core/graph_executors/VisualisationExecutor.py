@@ -14,7 +14,7 @@ class VisualisationExecutor(GraphExecutor):
 
     def execute(self) -> None:
         _, (model_out, _), _, _ = self._build_computation_graph()
-        config = self._get_tf_session_config()
+        config = self._get_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 sess.run(tf.global_variables_initializer())

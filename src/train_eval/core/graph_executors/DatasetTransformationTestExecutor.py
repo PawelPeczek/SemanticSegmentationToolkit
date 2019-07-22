@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import cv2 as cv
 import numpy as np
+
+from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.CityScapesIteratorFactory import IteratorType
 from src.dataset.utils.mapping_utils import get_id_to_colour_mapping, map_colour
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 from src.train_eval.core.persistence.TrainingPersistenceManager import TrainingPersistenceManager
@@ -13,14 +14,16 @@ from src.train_eval.core.persistence.TrainingPersistenceManager import TrainingP
 
 class DatasetTransformationTestExecutor(GraphExecutor):
 
-    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+    def __init__(self,
+                 descriptive_name: str,
+                 config: GraphExecutorConfigReader):
         super().__init__(descriptive_name, config)
-        self._config.data_transoformation_options['application_probability'] = 1.0
+        self._config.transoformation_options['application_probability'] = 1.0
 
     def execute(self) -> None:
         _, _, image, label = self._build_computation_graph()
         image = tf.cast(image, tf.uint8)
-        config = self._get_tf_session_config()
+        config = self._get_session_config()
         with tf.Session(config=config) as sess:
             with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
                 self.__proceed_inference(sess, image, label)

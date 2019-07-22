@@ -27,7 +27,8 @@ class Network:
 
     class Block:
 
-        def output_registered(self, node_name: str):
+        @classmethod
+        def output_registered(cls, node_name: str):
 
             def decorator(layer_fun):
 
@@ -44,8 +45,10 @@ class Network:
     MAIN_OUTPUT_NAME = 'out'
     _MISSING_NODE_ERROR_MSG = 'Node name(s) required as output not present.'
 
-    def __init__(self, output_classes: int):
+    def __init__(self, output_classes: int,
+                 ignore_labels: Optional[List[int]] = None):
         self._output_classes = output_classes
+        self._ignore_labels = ignore_labels
         self._output_nodes = {}
 
     @abstractmethod
@@ -53,10 +56,29 @@ class Network:
                      x: tf.Tensor,
                      is_training: bool = True,
                      nodes_to_return: RequiredNodes = None) -> NetworkOutput:
+        """
+        This method should allow the caller to get feed-forward network
+        result - with possibility to obtain any registered node which may be
+        useful when using the model later on. In particular - this method
+        should be invoked by training_pass() in order to get nodes
+        required to compute training loss.
+        """
+        raise RuntimeError('This method must be implemented in derived class.')
+
+    @abstractmethod
+    def training_pass(self, x: tf.Tensor, y: tf.Tensor) -> tf.Operation:
+        """
+        Method invoked while training, should return error operation in
+        order to make it possible to train model with chosen optimizer.
+        Should use feed_forward() method to obtain desired network output.
+        """
         raise RuntimeError('This method must be implemented in derived class.')
 
     @abstractmethod
     def infer(self, x: BlockOutput) -> NetworkOutput:
+        """
+        Method used while inference from trained model.
+        """
         raise RuntimeError('This method must be implemented in derived class.')
 
     def _register_output(self,

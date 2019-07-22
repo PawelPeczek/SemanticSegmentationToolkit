@@ -17,5 +17,5 @@ class TrainingPersistenceManager(PersistenceManager):
 
     def _prepare_storage(self) -> None:
         super()._prepare_storage()
-        config_copy_path = os.path.join(self._model_directory_path, 'train-config.yaml')
+        config_copy_path = os.path.join(self._model_directory_path, 'train-config.yml')
         copyfile(self._config.get_config_path(), config_copy_path)

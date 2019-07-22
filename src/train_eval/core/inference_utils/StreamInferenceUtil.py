@@ -5,7 +5,7 @@ import cv2 as cv
 import numpy as np
 
 from src.dataset.utils.mapping_utils import get_id_to_colour_mapping
-from src.model.SegmentationModelFactory import SegmentationModelFactory
+from src.model.utils import ModelFactory
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 from src.train_eval.core.config_readers.InferenceConfigReader import InferenceConfigReader
 from src.utils.filesystem_utils import create_directory
@@ -41,7 +41,7 @@ class StreamInferenceUtil:
         return np.array([(0, 0, 0)] + list(mappings.values()))
 
     def __construct_model(self) -> SemanticSegmentationModel:
-        model_factory = SegmentationModelFactory()
+        model_factory = ModelFactory()
         return model_factory.assembly(self.__config.model_name)
 
     def __build_feedable_graph(self) -> Tuple[tf.placeholder, tf.Tensor]:

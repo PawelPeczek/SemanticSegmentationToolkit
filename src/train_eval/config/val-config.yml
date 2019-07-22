@@ -6,6 +6,7 @@ tfrecords_base_name: 'city-scapes.tfrecords'
 destination_size: [2048, 1024]
 model_name: 'ICNetV14'
 num_classes: 20
+ignore_labels: [0]
 model_dir: '/archive/model_storage/big_images_model/icnet_v14_2019_07_11_04:35'
 checkpoint_name: 'checkpoint.ckpt-210'
 batch_size: 1

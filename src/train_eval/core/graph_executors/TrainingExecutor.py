@@ -38,7 +38,7 @@ class TrainingExecutor(GraphExecutor):
             optimization_op = optimizer.minimize(loss)
         val_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
         train_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
-        sess_config = self._get_tf_session_config()
+        sess_config = self._get_session_config()
         with tf.Session(config=sess_config) as sess:
             with tf.device("/gpu:{}".format(self.__get_gpu_to_use())):
                 self.__train_loop(sess, iterator, loss, optimization_op, val_set_miou_ops, train_set_miou_ops)
@@ -66,7 +66,7 @@ class TrainingExecutor(GraphExecutor):
             with tf.device("/gpu:{}".format(self.__get_primary_gpu())):
                 val_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
                 train_set_miou_ops = self.__build_inter_training_evaluation_graph(IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
-            sess_config = self._get_tf_session_config()
+            sess_config = self._get_session_config()
             with tf.Session(config=sess_config) as sess:
                 self.__train_loop(sess, iterator, loss_acc, train_op, val_set_miou_ops, train_set_miou_ops)
 
