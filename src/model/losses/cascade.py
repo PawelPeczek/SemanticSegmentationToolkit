@@ -36,7 +36,7 @@ def _compute_branch_loss(output_node: tf.Tensor,
     loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=output_node,
         labels=resized_y)
-    mask = _prepare_loss_mask(resized_y, to_ignore=ignored_labels)
+    mask = prepare_loss_mask(resized_y, to_ignore=ignored_labels)
     if mask is not None:
         loss = tf.math.multiply(loss, mask)
     return tf.reduce_mean(loss)
@@ -53,8 +53,8 @@ def _resize_gt(gt: tf.Tensor,
     return tf.cast(resized_y, dtype=tf.int32)
 
 
-def _prepare_loss_mask(resized_y: tf.Tensor,
-                       to_ignore: LabelsToIgnore = None) -> Optional[tf.Tensor]:
+def prepare_loss_mask(resized_y: tf.Tensor,
+                      to_ignore: LabelsToIgnore = None) -> Optional[tf.Tensor]:
     mask = None
     for label_to_ignore in to_ignore:
         label_mask = tf.cast(

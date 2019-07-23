@@ -46,8 +46,11 @@ class ConfigReader(ABC):
         dest_size = self._conf_dict['destination_size']
         self._conf_dict['destination_size'] = (dest_size[0], dest_size[1])
 
-    def __getattr__(self, name) -> Any:
+    def __getattr__(self, name: str) -> Any:
         return self._conf_dict[name]
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        self._conf_dict[name] = value
 
 
 class GraphExecutorConfigReader(ConfigReader):

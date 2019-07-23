@@ -1,4 +1,6 @@
 import os
+from typing import Optional, Union
+
 import tensorflow as tf
 import uuid
 from abc import ABC, abstractmethod
@@ -24,13 +26,17 @@ class PersistenceManager(ABC):
         self._dataset_transformation_test_path = self.__generate_dataset_transformation_test_path()
         self._prepare_storage()
 
-    def log_loss(self, epoch: int, loss_value: float, train_acc: float = -1.0, val_acc: float = -1.0) -> None:
+    def log_loss(self,
+                 epoch: int,
+                 loss_value: Union[float, str],
+                 train_acc: Optional[float] = None,
+                 val_acc: Optional[float] = None) -> None:
         log_content = '{},{},'.format(epoch, loss_value)
-        if train_acc >= 0:
+        if train_acc is not None:
             log_content = '{}{},'.format(log_content, train_acc)
         else:
             log_content = '{},'.format(log_content)
-        if val_acc >= 0:
+        if val_acc is not None:
             log_content = '{}{}'.format(log_content, val_acc)
         if not os.path.exists(self._loss_log_file_path):
             header = 'Epoch no.,Loss,Train acc.,Val acc.{}'.format(os.linesep)

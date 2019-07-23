@@ -6,7 +6,7 @@ from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.CityScapesIteratorFactory import CityScapesIteratorFactory, IteratorType
 from src.model.network import Network
 from src.model.utils import ModelFactory
-from src.train_eval.core.optimizers.OptimizerWrapperFactory import OptimizerWrapperFactory
+from src.train_eval.core.optimizers.wrappers import OptimizerWrapperFactory
 from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
 
 
@@ -41,13 +41,6 @@ class GraphExecutor(ABC):
     def _get_iterator(self) -> tf.data.Iterator:
         iterator_type = self._get_iterator_type()
         return self._iterator_factory.get_iterator(iterator_type)
-
-    def _get_data_point(self) -> Tuple[tf.Tensor, tf.Tensor]:
-        iterator = self._get_iterator()
-        return iterator.get_next()
-
-    def _get_network(self) -> Network:
-        return self._model
 
     def _initialize_optimizer(self) -> tf.train.Optimizer:
         optimizer_wrapper_factory = OptimizerWrapperFactory()
