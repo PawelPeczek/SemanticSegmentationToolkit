@@ -1,17 +1,11 @@
 import logging
 from abc import abstractmethod
-from enum import Enum
 from typing import Optional, Union, Dict, List
 
 import tensorflow as tf
 
 
 logger = logging.getLogger(__file__)
-
-
-class NetworkMode(Enum):
-    TRAIN = 0
-    INFERENCE = 1
 
 
 class MissingNodeError(Exception):
@@ -63,7 +57,8 @@ class Network:
         should be invoked by training_pass() in order to get nodes
         required to compute training loss.
         """
-        raise RuntimeError('This method must be implemented in derived class.')
+        raise NotImplementedError('This method must be implemented in '
+                                  'derived class.')
 
     @abstractmethod
     def training_pass(self, x: tf.Tensor, y: tf.Tensor) -> tf.Operation:
@@ -72,14 +67,16 @@ class Network:
         order to make it possible to train model with chosen optimizer.
         Should use feed_forward() method to obtain desired network output.
         """
-        raise RuntimeError('This method must be implemented in derived class.')
+        raise NotImplementedError('This method must be implemented in '
+                                  'derived class.')
 
     @abstractmethod
     def infer(self, x: BlockOutput) -> NetworkOutput:
         """
         Method used while inference from trained model.
         """
-        raise RuntimeError('This method must be implemented in derived class.')
+        raise NotImplementedError('This method must be implemented in '
+                                  'derived class.')
 
     def _register_output(self,
                          node: tf.Tensor,

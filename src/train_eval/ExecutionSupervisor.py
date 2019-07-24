@@ -1,7 +1,7 @@
 from abc import ABC
 
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
-from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType, GraphExecutorFactory
+from src.common.config_utils import GraphExecutorConfigReader
+from src.train_eval.core.graph_executors.graph_executor_factory import GraphExecutorType, GraphExecutorFactory
 
 
 class ExecutionSupervisor(ABC):

@@ -1,12 +1,11 @@
-import random
 from typing import Tuple, List
 
 import tensorflow as tf
 
+from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.transformations.DatasetTransformation import DatasetTransformation
 from src.dataset.common.transformations.DatasetTransformationFactory import DatasetTransformationFactory
 from src.dataset.common.transformations.TransformationType import TransformationType
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
 
 from logging import getLogger
 

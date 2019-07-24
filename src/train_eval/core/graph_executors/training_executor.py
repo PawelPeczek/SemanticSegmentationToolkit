@@ -1,17 +1,16 @@
 import tensorflow as tf
 import sys
-from typing import List, Tuple, Union
+from typing import List, Union
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.CityScapesIteratorFactory import IteratorType
-from src.model.losses.cascade import prepare_loss_mask
-from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
+from src.dataset.common.iterators import IteratorType
+from src.train_eval.core.graph_executors.graph_executor import GraphExecutor
 from src.train_eval.core.graph_executors.utils import ValidationOperation, \
     evaluate_miou, average_gradients, average_loss, SessionOperations, \
     ValidationOperations, MultiGPUOperations, get_gradient, \
-    minimize_loss, assign_to_device
-from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
-from src.train_eval.core.persistence.TrainingPersistenceManager import TrainingPersistenceManager
+    minimize_loss, assign_to_device, get_validation_operation
+from src.train_eval.core.persistence.managers import PersistenceManager, \
+    TrainingPersistenceManager
 
 
 class TrainingExecutor(GraphExecutor):
@@ -36,7 +35,9 @@ class TrainingExecutor(GraphExecutor):
         return self.__iterator_type
 
     def _get_persistence_manager(self) -> PersistenceManager:
-        return TrainingPersistenceManager(self._descriptive_name, self._config)
+        return TrainingPersistenceManager(
+            descriptive_name=self._descriptive_name,
+            config=self._config)
 
     def __train_on_single_gpu(self) -> None:
         with tf.device("/gpu:{}".format(self.__get_gpu_to_use())):
@@ -70,9 +71,9 @@ class TrainingExecutor(GraphExecutor):
 
     def __initialize_validation_operations(self) -> ValidationOperations:
         with tf.device("/gpu:{}".format(self.__get_primary_gpu())):
-            training_set_eval_operation = self.__get_validation_operations(
+            training_set_eval_operation = self.__get_validation_operation(
                 IteratorType.INITIALIZABLE_TRAIN_SET_ITERATOR)
-            test_set_eval_operation = self.__get_validation_operations(
+            test_set_eval_operation = self.__get_validation_operation(
                 IteratorType.INITIALIZABLE_VALIDATION_ITERATOR)
         return ValidationOperations(
             training_set_evaluation=training_set_eval_operation,
@@ -123,25 +124,17 @@ class TrainingExecutor(GraphExecutor):
             loss_operation = self._model.training_pass(x, y)
         return loss_operation
 
-    def __get_validation_operations(self,
-                                    iterator_type: IteratorType) -> ValidationOperation:
+    def __get_validation_operation(self,
+                                   iterator_type: IteratorType) -> ValidationOperation:
         with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
             iterator = self._iterator_factory.get_iterator(iterator_type)
-            x, y = iterator.get_next()
-            prediction = self._model.infer(x)
-            weights = None
+            num_classes = self._config.num_classes
             labels_to_ignore = self._config.get_or_else('ignore_labels', None)
-            if labels_to_ignore is not None:
-                weights = prepare_loss_mask(y, labels_to_ignore)
-            mean_iou, mean_iou_update = tf.metrics.mean_iou(
-                labels=y,
-                predictions=prediction,
-                num_classes=self._config.num_classes,
-                weights=weights)
-            return ValidationOperation(
+            return get_validation_operation(
                 iterator=iterator,
-                mean_iou=mean_iou,
-                mean_iou_update=mean_iou_update)
+                model=self._model,
+                num_classes=num_classes,
+                labels_to_ignore=labels_to_ignore)
 
     def __train(self,
                 session: tf.Session,
@@ -243,11 +236,10 @@ class TrainingExecutor(GraphExecutor):
                        session: tf.Session,
                        validation_operation: ValidationOperation) -> float:
         primary_gpu = self.__get_primary_gpu()
-        device = f'/gpu:{primary_gpu}'
-        return evaluate_miou(
-            target_device_name=device,
-            session=session,
-            validation_operation=validation_operation)
+        with tf.device(f'/gpu:{primary_gpu}'):
+            return evaluate_miou(
+                session=session,
+                validation_operation=validation_operation)
 
     def __get_primary_gpu(self) -> str:
         gpu_to_use = self.__get_gpu_to_use()

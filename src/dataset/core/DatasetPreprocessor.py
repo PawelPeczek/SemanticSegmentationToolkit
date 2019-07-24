@@ -12,7 +12,7 @@ import cv2 as cv
 from typing import List, Tuple, Dict
 
 from src.dataset.core.DataPreProcessingConfigReader import DataPreProcessingConfigReader
-from src.dataset.utils.mapping_utils import get_colour_to_id_mapping
+from src.dataset.utils.mapping_utils import get_color_to_id_mapping
 from src.utils.filesystem_utils import create_directory
 
 
@@ -73,7 +73,7 @@ class DatasetPreprocessor:
         print('Start creating *.tfrecords for {} subset'.format(subset_name))
         create_directory(os.path.join(self.__config.output_tfrecords_dir, subset_name))
         paths_list_len = len(files_list)
-        colour_to_id = get_colour_to_id_mapping(self.__config.mapping_file)
+        colour_to_id = get_color_to_id_mapping(self.__config.mapping_file)
         batch_size = self.__config.binary_batch_size
         processes = []
         active_workers = 0

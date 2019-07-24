@@ -4,7 +4,7 @@ import tensorflow as tf
 import cv2 as cv
 import numpy as np
 
-from src.dataset.utils.mapping_utils import get_id_to_colour_mapping
+from src.dataset.utils.mapping_utils import get_id_to_color_mapping
 from src.model.utils import ModelFactory
 from src.model.SemanticSegmentationModel import SemanticSegmentationModel
 from src.train_eval.core.config_readers.InferenceConfigReader import InferenceConfigReader
@@ -37,7 +37,7 @@ class StreamInferenceUtil:
                 self.__proceed_inference_on_video_stream(sess, X_placeholder, prediction)
 
     def __prepare_prediction_to_color_mapping(self) -> np.ndarray:
-        mappings = get_id_to_colour_mapping(self.__config.mapping_file)
+        mappings = get_id_to_color_mapping(self.__config.mapping_file)
         return np.array([(0, 0, 0)] + list(mappings.values()))
 
     def __construct_model(self) -> SemanticSegmentationModel:

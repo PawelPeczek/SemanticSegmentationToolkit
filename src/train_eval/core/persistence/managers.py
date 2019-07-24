@@ -1,4 +1,5 @@
 import os
+from shutil import copyfile
 from typing import Optional, Union
 
 import tensorflow as tf
@@ -6,7 +7,7 @@ import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
+from src.common.config_utils import GraphExecutorConfigReader
 from src.utils.filesystem_utils import create_directory
 
 
@@ -52,11 +53,11 @@ class PersistenceManager(ABC):
         print('Checkpoint saving [DONE]')
         print('===========================================================')
 
-    def generate_random_inference_image_path(self) -> str:
+    def generate_inference_image_path(self) -> str:
         rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
         return os.path.join(self._config.model_dir, rand_name)
 
-    def generate_random_transformation_test_image_path(self) -> str:
+    def generate_transformation_image_path(self) -> str:
         rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
         return os.path.join(self._dataset_transformation_test_path, rand_name)
 
@@ -103,3 +104,28 @@ class PersistenceManager(ABC):
 
     def __generate_dataset_transformation_test_path(self) -> str:
         return os.path.join(self._model_directory_path, 'dataset_transformation_test')
+
+
+class TrainingPersistenceManager(PersistenceManager):
+
+    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+        super().__init__(descriptive_name, config)
+
+    def _generate_model_dir_path(self) -> str:
+        timestamp = self._get_current_timestamp()
+        training_dir_name = '{}_{}'.format(self._descriptive_name, timestamp)
+        return os.path.join(self._config.model_storage_directory, training_dir_name)
+
+    def _prepare_storage(self) -> None:
+        super()._prepare_storage()
+        config_copy_path = os.path.join(self._model_directory_path, 'train-config.yml')
+        copyfile(self._config.get_config_path(), config_copy_path)
+
+
+class EvaluationPersistenceManager(PersistenceManager):
+
+    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+        super().__init__(descriptive_name, config)
+
+    def _generate_model_dir_path(self) -> str:
+        return self._config.model_dir

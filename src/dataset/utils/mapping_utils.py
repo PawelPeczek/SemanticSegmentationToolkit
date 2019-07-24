@@ -1,17 +1,25 @@
 import numpy as np
 import yaml
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
+
+Color = Tuple[int, int, int]
+Id2ColorMapping = Dict[int, Color]
+Color2IdMapping = Dict[Color, int]
 
 
-def map_colour(X, mappings):
+def map_colour(x: np.ndarray,
+               mappings: Id2ColorMapping) -> np.ndarray:
 
-    def map_colour_in_row(row):
-        return list(map(lambda e: mappings[e] if e in mappings else (0, 0, 0), row))
+    def __map_color_for_pixel(pixel: int) -> Color:
+        return mappings[pixel] if pixel in mappings else (0, 0, 0)
 
-    return np.array(list(map(map_colour_in_row, X)))
+    def __map_color_in_row(row: np.ndarray) -> List[Color]:
+        return list(map(__map_color_for_pixel, row))
+
+    return np.array(list(map(__map_color_in_row, x)))
 
 
-def get_colour_to_id_mapping(mapping_path: str) -> Dict[Tuple[int, int, int], int]:
+def get_color_to_id_mapping(mapping_path: str) -> Color2IdMapping:
     mapping = get_mapping_file_content(mapping_path)
     result = {}
     for idx, colour in mapping.values():
@@ -19,7 +27,7 @@ def get_colour_to_id_mapping(mapping_path: str) -> Dict[Tuple[int, int, int], in
     return result
 
 
-def get_id_to_colour_mapping(mapping_path: str) -> Dict[int, Tuple[int, int, int]]:
+def get_id_to_color_mapping(mapping_path: str) -> Id2ColorMapping:
     mapping = get_mapping_file_content(mapping_path)
     result = {}
     for idx, colour in mapping.values():

@@ -2,23 +2,26 @@ import tensorflow as tf
 from tensorflow.python.client import timeline
 import time
 
-from src.dataset.common.CityScapesIteratorFactory import IteratorType
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
-from src.train_eval.core.graph_executors.GraphExecutor import GraphExecutor
-from src.train_eval.core.persistence.EvaluationPersistenceManager import EvaluationPersistenceManager
-from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
+from src.common.config_utils import GraphExecutorConfigReader
+from src.dataset.common.iterators import IteratorType
+from src.train_eval.core.graph_executors.graph_executor import GraphExecutor
+from src.train_eval.core.persistence.managers import PersistenceManager, \
+    EvaluationPersistenceManager
 
 
 class InferenceSpeedTestExecutor(GraphExecutor):
 
-    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+    def __init__(self,
+                 descriptive_name: str,
+                 config: GraphExecutorConfigReader):
         super().__init__(descriptive_name, config)
 
     def execute(self) -> None:
         if self._config.batch_size is not 1:
             self._config.batch_size = 1
-        _, (model_out, _), _, _ = self._build_computation_graph()
-        prediction = tf.math.argmax(model_out, axis=3, output_type=tf.dtypes.int32)
+        iterator = self._get_iterator()
+        x, _ = iterator.get_next()
+        prediction = self._model.infer(x)
         saver = tf.train.Saver()
         config = self._get_session_config()
         with tf.Session(config=config) as sess:
@@ -32,18 +35,22 @@ class InferenceSpeedTestExecutor(GraphExecutor):
         return IteratorType.DUMMY_ITERATOR
 
     def _get_persistence_manager(self) -> PersistenceManager:
-        return EvaluationPersistenceManager(self._descriptive_name, self._config)
+        return EvaluationPersistenceManager(
+            descriptive_name=self._descriptive_name,
+            config=self._config)
 
-    def __proceed_time_inference_test(self, sess: tf.Session, prediction: tf.Tensor) -> None:
+    def __proceed_time_inference_test(self,
+                                      session: tf.Session,
+                                      prediction: tf.Tensor) -> None:
         times = []
         try:
             for i in range(0, 5):
                 # dummy warm-up predictions
-                sess.run(prediction)
-            self.__profile_inference(sess, prediction)
+                session.run(prediction)
+            self.__profile_inference(session=session, prediction=prediction)
             while True:
                 start_t = time.time()
-                sess.run(prediction)
+                session.run(prediction)
                 diff_t = (time.time() - start_t)
                 times.append(diff_t)
         except tf.errors.OutOfRangeError:
@@ -51,10 +58,12 @@ class InferenceSpeedTestExecutor(GraphExecutor):
             print("Avg inference time: {}s per frame".format(avg_inf_time))
             print('Inference speed test [DONE]')
 
-    def __profile_inference(self, sess: tf.Session, prediction: tf.Tensor) -> None:
+    def __profile_inference(self,
+                            session: tf.Session,
+                            prediction: tf.Tensor) -> None:
         options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
         run_metadata = tf.RunMetadata()
-        sess.run(prediction, options=options, run_metadata=run_metadata)
+        session.run(prediction, options=options, run_metadata=run_metadata)
         fetched_timeline = timeline.Timeline(run_metadata.step_stats)
         trace = fetched_timeline.generate_chrome_trace_format()
         self._persistence_manager.save_profiling_trace(trace)

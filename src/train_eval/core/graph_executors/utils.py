@@ -1,12 +1,15 @@
-from typing import Tuple, List, Callable, Union
+from typing import Tuple, List, Callable, Union, Optional
 
 import tensorflow as tf
+
+from src.model.losses.cascade import prepare_loss_mask
+from src.model.network import Network
 
 Gradient = Union[Tuple[tf.Operation, tf.Variable], tf.Operation]
 Gradients = List[Gradient]
 AvgGradOperations = List[Tuple[tf.Operation, tf.Variable]]
 OptimizationStep = Callable[[tf.Operation], Gradient]
-
+LabelsToIgnore = Optional[List[int]]
 
 PS_OPS = ['Variable', 'VariableV2', 'AutoReloadVariable']
 
@@ -108,10 +111,28 @@ def assign_to_device(target_device: str,
     return assign
 
 
-def evaluate_miou(target_device_name: str,
-                  session: tf.Session,
+def get_validation_operation(iterator: tf.data.Iterator,
+                             model: Network,
+                             num_classes: int,
+                             labels_to_ignore: LabelsToIgnore = None) -> ValidationOperation:
+    x, y = iterator.get_next()
+    prediction = model.infer(x)
+    weights = None
+    if labels_to_ignore is not None:
+        weights = prepare_loss_mask(y, labels_to_ignore)
+    mean_iou, mean_iou_update = tf.metrics.mean_iou(
+        labels=y,
+        predictions=prediction,
+        num_classes=num_classes,
+        weights=weights)
+    return ValidationOperation(
+        iterator=iterator,
+        mean_iou=mean_iou,
+        mean_iou_update=mean_iou_update)
+
+
+def evaluate_miou(session: tf.Session,
                   validation_operation: ValidationOperation) -> float:
-    with tf.device(target_device_name):
         session.run(tf.initializers.variables(tf.local_variables()))
         session.run(validation_operation.iterator.initializer)
         try:

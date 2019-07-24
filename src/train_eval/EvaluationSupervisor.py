@@ -1,9 +1,9 @@
 from fire import Fire
 from typing import Union
 
+from src.common.config_utils import GraphExecutorConfigReader
 from src.train_eval.ExecutionSupervisor import ExecutionSupervisor
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
-from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType
+from src.train_eval.core.graph_executors.graph_executor_factory import GraphExecutorType
 
 
 class EvaluationSupervisor(ExecutionSupervisor):

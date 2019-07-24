@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 import tensorflow as tf
-from typing import Tuple, Optional, Union
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.CityScapesIteratorFactory import CityScapesIteratorFactory, IteratorType
+from src.dataset.common.iterators import CityScapesIteratorFactory, IteratorType
 from src.model.network import Network
 from src.model.utils import ModelFactory
 from src.train_eval.core.optimizers.wrappers import OptimizerWrapperFactory
-from src.train_eval.core.persistence.PersistenceManager import PersistenceManager
+from src.train_eval.core.persistence.managers import PersistenceManager
 
 
 class GraphExecutor(ABC):
