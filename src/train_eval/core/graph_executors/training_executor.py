@@ -1,6 +1,6 @@
 import tensorflow as tf
 import sys
-from typing import List, Union
+from typing import List, Union, Tuple
 
 from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.iterators import IteratorType
@@ -16,6 +16,7 @@ from src.train_eval.core.persistence.managers import PersistenceManager, \
 class TrainingExecutor(GraphExecutor):
 
     LoopVariables = List[Union[tf.Tensor, tf.Operation]]
+    DistributedOps = Tuple[tf.Operation, tf.Operation]
 
     def __init__(self,
                  descriptive_name: str,
@@ -49,7 +50,7 @@ class TrainingExecutor(GraphExecutor):
         validation_operations = self.__initialize_validation_operations()
         sess_ops = SessionOperations(
             iterator=iterator,
-            loss_operation=loss,
+            loss_operations=loss,
             gradient_update=gradient_update,
             validation_operations=validation_operations)
         self.__run_training_session(sess_ops)
@@ -64,7 +65,7 @@ class TrainingExecutor(GraphExecutor):
             validation_operations = self.__initialize_validation_operations()
             sess_ops = SessionOperations(
                 iterator=iterator,
-                loss_operation=loss_operation,
+                loss_operations=loss_operation,
                 gradient_update=gradient_update,
                 validation_operations=validation_operations)
             self.__run_training_session(sess_ops)
@@ -87,7 +88,7 @@ class TrainingExecutor(GraphExecutor):
 
     def __distribute_training(self,
                               iterator: tf.data.Iterator,
-                              optimizer: tf.train.Optimizer):
+                              optimizer: tf.train.Optimizer) -> DistributedOps:
         gpus_to_use = self.__get_gpu_to_use()
         gradients, loss_operations = [], []
         for gpu_id in gpus_to_use:
@@ -154,7 +155,7 @@ class TrainingExecutor(GraphExecutor):
                               session_operations: SessionOperations) -> None:
         session.run(session_operations.iterator.initializer)
         loop_variables = [
-            session_operations.loss_operation,
+            session_operations.loss_operations,
             session_operations.gradient_update
         ]
         errors = self.__proceed_epoch_loop(epoch_id, session, loop_variables)
@@ -194,7 +195,8 @@ class TrainingExecutor(GraphExecutor):
     def __increase_saving_frequency(self) -> None:
         saving_frequency = self._config.saving_frequency
         saving_frequency = int(round(saving_frequency / 2))
-        self._config.saving_frequency = saving_frequency
+        self.__saving_frequency_increased = True
+        self._config.update_config_value('saving_frequency', saving_frequency)
 
     def __model_should_be_persisted(self, epoch_num: int) -> bool:
         return epoch_num % self._config.saving_frequency is 0

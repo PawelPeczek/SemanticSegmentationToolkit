@@ -28,7 +28,7 @@ class ICNet(Network):
             },
             ['conv2_2', 'conv2_3']
         ),
-        ({'output_filters': (64, 64, 256), 'input_stride': 2}, ['conv3_1'])
+        ({'output_filters': (64, 64, 256), 'input_stride': 2}, ['conv_3_1'])
     ]
 
     __SMALL_BRANCH_ENCODERS_CONFIGS = [
@@ -70,20 +70,32 @@ class ICNet(Network):
             'lambda_3': 1.0
         }
 
-    def __init__(self, output_classes: int,
+    def __init__(self,
+                 output_classes: int,
+                 image_mean: Optional[List[float]] = None,
                  ignore_labels: Optional[List[int]] = None,
                  config: Optional[dict] = None):
-        super().__init__(output_classes, ignore_labels=ignore_labels)
+        super().__init__(
+            output_classes=output_classes,
+            image_mean=image_mean,
+            ignore_labels=ignore_labels,
+            config=config)
         if config is None:
             config = ICNet.__get_default_config()
+            self._config = config
         self.__labmda_1 = config['lambda_1']
         self.__lambda_2 = config['lambda_2']
         self.__lambda_3 = config['lambda_3']
+        self.__weight_decay = 0.0
+        if 'weight_decay' in config:
+            self.__weight_decay = config['weight_decay']
 
     def feed_forward(self,
                      x: tf.Tensor,
                      is_training: bool = True,
                      nodes_to_return: RequiredNodes = None) -> NetworkOutput:
+        if self._image_mean is not None:
+            x -= self._image_mean
         input_size = x.shape[1], x.shape[2]
         conv3_sub1_proj = self.__big_images_branch(x=x, is_training=is_training)
         conv3_1 = self.__medium_images_branch(x)
@@ -104,8 +116,7 @@ class ICNet(Network):
             conv3_sub1_proj=conv3_sub1_proj)
         conv6_interp = upsample_bilinear(
             x=conv6_cls,
-            zoom_factor=4,
-            name='conv6_interp')
+            zoom_factor=4)
         out = tf.math.argmax(conv6_interp, axis=3, output_type=tf.dtypes.int32)
         return self._construct_output(
             feedforward_output=out,
@@ -137,6 +148,7 @@ class ICNet(Network):
         return cascade_loss(
             cascade_output_nodes=cls_outputs,
             y=y,
+            weight_decay=self.__weight_decay,
             cascade_loss_weights=cls_weights,
             labels_to_ignore=self._ignore_labels)
 
@@ -190,8 +202,7 @@ class ICNet(Network):
                                is_training: bool = True) -> tf.Tensor:
         data_sub2 = downsample_bilinear(
             x=x,
-            shrink_factor=2,
-            name='data_sub2')
+            shrink_factor=2)
         conv1_1_3x3_s2 = downsample_conv2d(
             x=data_sub2,
             num_filters=32,
@@ -235,8 +246,7 @@ class ICNet(Network):
                               is_training: bool = True) -> tf.Tensor:
         conv3_1_sub4 = downsample_bilinear(
             x=conv3_1,
-            shrink_factor=2,
-            name='conv3_1_sub4')
+            shrink_factor=2)
         conv_5_3 = self.__residual_encoder_chain(
             x=conv3_1_sub4,
             encoders_configs=ICNet.__SMALL_BRANCH_ENCODERS_CONFIGS,
@@ -260,8 +270,7 @@ class ICNet(Network):
             name='conv5_4_k1_bn')
         conv5_4_interp = upsample_bilinear(
             x=conv5_4_k1_bn,
-            zoom_factor=2,
-            name='conv5_4_interp')
+            zoom_factor=2)
         conv_sub4 = atrous_conv2d(
             x=conv5_4_interp,
             num_filters=128,
@@ -338,8 +347,7 @@ class ICNet(Network):
         sum_relu = tf.nn.relu(sum, name=f'{fusion_name}/relu')
         sum_interp = upsample_bilinear(
             x=sum_relu,
-            zoom_factor=2,
-            name=f'{fusion_name}/interp')
+            zoom_factor=2)
         return atrous_conv2d(
             x=sum_interp,
             num_filters=output_filters,

@@ -1,14 +1,17 @@
+from functools import reduce
 from typing import List, Optional, Tuple
 
 import tensorflow as tf
 
 from src.model.layers.interpolation import resize_nn
 
+
 LabelsToIgnore = Optional[List[int]]
 
 
 def cascade_loss(cascade_output_nodes: List[tf.Tensor],
                  y: tf.Tensor,
+                 weight_decay: float = 0.0,
                  cascade_loss_weights: Optional[List[float]] = None,
                  labels_to_ignore: LabelsToIgnore = None) -> tf.Operation:
     losses = []
@@ -17,13 +20,14 @@ def cascade_loss(cascade_output_nodes: List[tf.Tensor],
             output_node=output_node,
             y=y,
             ignored_labels=labels_to_ignore)
+        loss = tf.reduce_mean(loss)
         losses.append(loss)
     if cascade_loss_weights is not None:
         losses = _weight_losses(
             losses=losses,
             cascade_loss_weights=cascade_loss_weights)
-    losses = tf.stack(losses, axis=0)
-    return tf.reduce_mean(losses)
+    l2_loss = _create_l2_loss(weight_decay=weight_decay)
+    return reduce(lambda acc, x: acc + x, losses) + l2_loss
 
 
 def _compute_branch_loss(output_node: tf.Tensor,
@@ -72,3 +76,11 @@ def _weight_losses(losses: List[tf.Operation],
     assert len(cascade_loss_weights) == len(losses)
     losses_with_weights = list(zip(cascade_loss_weights, losses))
     return list(map(lambda x: x[0] * x[1], losses_with_weights))
+
+
+def _create_l2_loss(weight_decay: float) -> tf.Operation:
+    l2_losses = [
+        weight_decay * tf.nn.l2_loss(v) for v in tf.trainable_variables()
+        if 'kernel' in v.name
+    ]
+    return tf.add_n(l2_losses)

@@ -58,11 +58,11 @@ class SessionOperations:
 
     def __init__(self,
                  iterator: tf.data.Iterator,
-                 loss_operation: tf.Operation,
+                 loss_operations: tf.Operation,
                  gradient_update: tf.Operation,
                  validation_operations: ValidationOperations):
         self.__iterator = iterator
-        self.__loss_operation = loss_operation
+        self.__loss_operation = loss_operations
         self.__gradient_update = gradient_update
         self.__validation_operations = validation_operations
 
@@ -71,7 +71,7 @@ class SessionOperations:
         return self.__iterator
 
     @property
-    def loss_operation(self) -> tf.Operation:
+    def loss_operations(self) -> tf.Operation:
         return self.__loss_operation
 
     @property

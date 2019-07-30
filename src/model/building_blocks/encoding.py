@@ -312,6 +312,7 @@ def residual_conv_encoder(x: tf.Tensor,
         projection_conv = _projection_conv(
             x=x,
             filters=output_filters[-1],
+            stride=input_stride,
             name=name,
             is_training=is_training)
         sum = tf.add(projection_conv, increased, name=name)
@@ -326,15 +327,18 @@ def residual_conv_encoder(x: tf.Tensor,
 
 def _projection_conv(x: tf.Tensor,
                      filters: int,
+                     stride: int,
                      name: Optional[str],
                      is_training: bool = True) -> tf.Tensor:
     bn_name = None
     if name is not None:
         name = prepare_block_operation_name(name, '1x1_proj')
         bn_name = prepare_block_operation_name(name, '1x1_proj', 'bn')
+    stride = stride, stride
     projection = bottleneck_conv2d(
         x=x,
         num_filters=filters,
+        strides=stride,
         activation=None,
         name=name)
     return tf.layers.batch_normalization(

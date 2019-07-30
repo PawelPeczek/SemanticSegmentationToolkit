@@ -16,12 +16,18 @@ class ConfigReader(ABC):
     def is_option_set(self, option_name: str) -> bool:
         return option_name in self._conf_dict
 
-    def get_or_else(self, option_name: str,
+    def get_or_else(self,
+                    option_name: str,
                     else_value: Optional[Any] = None) -> Optional[Any]:
         if self.is_option_set(option_name):
             return self._conf_dict[option_name]
         else:
             return else_value
+
+    def update_config_value(self, option_name: str, new_value: Any) -> None:
+        if option_name not in self._conf_dict:
+            raise RuntimeError('Trying to set unknown config value')
+        self._conf_dict[option_name] = new_value
 
     @abstractmethod
     def _get_default_config_path(self) -> str:
@@ -48,9 +54,6 @@ class ConfigReader(ABC):
 
     def __getattr__(self, name: str) -> Any:
         return self._conf_dict[name]
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        self._conf_dict[name] = value
 
 
 class GraphExecutorConfigReader(ConfigReader):

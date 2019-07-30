@@ -3,11 +3,16 @@ dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
 tfrecords_dir: 'tfrecords-full-size'
 mapping_file: 'mappings.yaml'
 destination_size: [2048, 1024]
+img_mean: [103.939, 116.779, 123.68]
 tfrecords_base_name: 'city-scapes.tfrecords'
+#optimizer_options:
+#  optimizer_name: 'AdamW'
+#  learning_rate: 0.001
+#  weight_decay: 0.0001
 optimizer_options:
-  optimizer_name: 'AdamW'
+  optimizer_name: 'Momentum'
   learning_rate: 0.001
-  weight_decay: 0.0001
+  momentum: 0.9
 model_name: 'ICNet'
 num_classes: 20
 ignore_labels: [0]
@@ -15,13 +20,14 @@ model_config:
   lambda_1: 0.16
   lambda_2: 0.4
   lambda_3: 1.0
+  weight_decay: 0.0001
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
 batch_size: 8
 gpu_to_use: [0, 1]
 #gpu_to_use: 0
 epochs: 10000
-increase_saving_frequency_loss_treshold: 0.15
+increase_saving_frequency_loss_treshold: 0.08
 saving_frequency: 30
 measure_train_accuracy: True
 measure_train_accuracy_frequency: 30
@@ -34,10 +40,10 @@ transoformation_options:
   transformation_chain: [
     'adjust_contrast', 'adjust_brightness', 'gaussian_noise', 'horizontal_flip', 'crop_and_scale', 'rotation'
   ]
-  adjust_contrast_probability: 0.2
-  adjust_brightness_probability: 0.15
-  gaussian_noise_probability: 0.15
-  horizontal_flip_probability: 0.2
-  crop_and_scale_probability: 0.2
-  rotation_probability: 0.15
+  adjust_contrast_probability: 0.1
+  adjust_brightness_probability: 0.1
+  gaussian_noise_probability: 0.1
+  horizontal_flip_probability: 0.1
+  crop_and_scale_probability: 0.1
+  rotation_probability: 0.1
 

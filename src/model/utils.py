@@ -12,6 +12,7 @@ class ModelFactory:
     @staticmethod
     def assembly(model_name: str,
                  output_classes: int,
+                 image_mean: Optional[List[float]] = None,
                  ignore_labels: Optional[List[int]] = None,
                  model_config: Optional[dict] = None) -> Network:
         if model_name not in NAME_TO_MODEL:
@@ -19,6 +20,7 @@ class ModelFactory:
                 ModelFactory.__MODEL_NOT_PRESENT_ERROR_MSG)
         return NAME_TO_MODEL[model_name](
             output_classes=output_classes,
+            image_mean=image_mean,
             ignore_labels=ignore_labels,
-            model_config=model_config)
+            config=model_config)
 

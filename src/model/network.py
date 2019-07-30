@@ -31,6 +31,7 @@ class Network:
                     _self._register_output(
                         node=out_node,
                         node_name=node_name)
+                    return out_node
 
                 return register_wrapper
 
@@ -39,11 +40,21 @@ class Network:
     MAIN_OUTPUT_NAME = 'out'
     _MISSING_NODE_ERROR_MSG = 'Node name(s) required as output not present.'
 
-    def __init__(self, output_classes: int,
-                 ignore_labels: Optional[List[int]] = None):
+    def __init__(self,
+                 output_classes: int,
+                 image_mean: Optional[List[float]] = None,
+                 ignore_labels: Optional[List[int]] = None,
+                 config: Optional[dict] = None):
         self._output_classes = output_classes
         self._ignore_labels = ignore_labels
         self._output_nodes = {}
+        self._config = config
+        self._image_mean = None
+        if image_mean is not None and len(image_mean) is 3:
+            mean_tensor = tf.convert_to_tensor(
+                image_mean,
+                dtype=tf.float32)
+            self._image_mean = tf.expand_dims(mean_tensor, axis=0)
 
     @abstractmethod
     def feed_forward(self,

@@ -1,7 +1,7 @@
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.CityScapesIteratorFactory import IteratorType
 from enum import Enum
 
+from src.dataset.common.iterators import IteratorType
 from src.train_eval.core.graph_executors.dataset_transformation_test_executor import DatasetTransformationTestExecutor
 from src.train_eval.core.graph_executors.evaluation_executor import EvaluationExecutor
 from src.train_eval.core.graph_executors.graph_executor import GraphExecutor

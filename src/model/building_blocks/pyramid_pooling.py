@@ -88,19 +88,11 @@ def _pyramid_pooling_head(x: tf.Tensor,
         window_shape=window_shape,
         strides=strides,
         name=pool_op_name)
-    interp_op_name = None
-    if name is not None:
-        interp_op_name = prepare_block_operation_name(
-            name,
-            f'pool_{head_id}',
-            'interp'
-        )
     height, width = output_size
     return resize_bilinear(
         x=pool_op,
         height=height,
-        width=width,
-        name=interp_op_name)
+        width=width)
 
 
 def _pyramid_pooling_fusion(inputs: List[tf.Tensor],

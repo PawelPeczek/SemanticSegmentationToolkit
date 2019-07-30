@@ -33,12 +33,13 @@ class AdamWrapper(OptimizerWrapper):
         epsilon = self._get_parameter_value('epsilon', 1e-08)
         use_locking = self._get_parameter_value('use_locking', False)
         name = self._get_parameter_value('name', 'Adam')
-        return tf.train.AdamOptimizer(learning_rate=learning_rate,
-                                      beta1=beta1,
-                                      beta2=beta2,
-                                      epsilon=epsilon,
-                                      use_locking=use_locking,
-                                      name=name)
+        return tf.train.AdamOptimizer(
+            learning_rate=learning_rate,
+            beta1=beta1,
+            beta2=beta2,
+            epsilon=epsilon,
+            use_locking=use_locking,
+            name=name)
 
 
 class AdamWWrapper(OptimizerWrapper):
@@ -54,18 +55,39 @@ class AdamWWrapper(OptimizerWrapper):
         epsilon = self._get_parameter_value('epsilon', 1e-08)
         use_locking = self._get_parameter_value('use_locking', False)
         name = self._get_parameter_value('name', 'AdamW')
-        return tf.contrib.opt.AdamWOptimizer(weight_decay,
-                                             learning_rate=learning_rate,
-                                             beta1=beta1,
-                                             beta2=beta2,
-                                             epsilon=epsilon,
-                                             use_locking=use_locking,
-                                             name=name)
+        return tf.contrib.opt.AdamWOptimizer(
+            weight_decay,
+            learning_rate=learning_rate,
+            beta1=beta1,
+            beta2=beta2,
+            epsilon=epsilon,
+            use_locking=use_locking,
+            name=name)
+
+
+class MomentumWrapper(OptimizerWrapper):
+
+    def __init__(self, config_dict: Dict):
+        super().__init__(config_dict)
+
+    def get_optimizer(self) -> tf.train.Optimizer:
+        learning_rate = self._config_dict['learning_rate']
+        momentum = self._config_dict['momentum']
+        use_locking = self._get_parameter_value('use_locking', False)
+        name = self._get_parameter_value('name', 'Momentum')
+        use_nesterov = self._get_parameter_value('use_nesterov', False)
+        return tf.train.MomentumOptimizer(
+            learning_rate=learning_rate,
+            momentum=momentum,
+            use_locking=use_locking,
+            name=name,
+            use_nesterov=use_nesterov)
 
 
 NAME_TO_OPTIMIZER = {
     'adam': AdamWrapper,
-    'adamw': AdamWWrapper
+    'adamw': AdamWWrapper,
+    'momentum': MomentumWrapper
 }
 
 
@@ -74,7 +96,6 @@ class OptimizerWrapperError(Exception):
 
 
 class OptimizerWrapperFactory:
-
     __NON_EXISTING_WRAPPER_ERROR_MSG = 'Optimizer wrapper with given name ' \
                                        'not exists.'
 
@@ -84,4 +105,3 @@ class OptimizerWrapperFactory:
             raise OptimizerWrapperError(
                 OptimizerWrapperFactory.__NON_EXISTING_WRAPPER_ERROR_MSG)
         return NAME_TO_OPTIMIZER[optimizer_name](config_dict)
-

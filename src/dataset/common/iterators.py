@@ -164,6 +164,7 @@ class IteratorType(Enum):
     OS_VALIDATION_ITERATOR = OneShotValidationIterator
     OS_TRAIN_ITERATOR = OneShotTrainIterator
     INITIALIZABLE_VALIDATION_ITERATOR = InitializableValidationIterator
+    DUMMY_ITERATOR = None
 
 
 class CityScapesIteratorFactory:
@@ -175,7 +176,7 @@ class CityScapesIteratorFactory:
         factorized_iterator = None
         for iterator in IteratorType:
             if iterator_type == iterator:
-                factorized_iterator = iterator(self.__config)
+                factorized_iterator = iterator.value(self.__config)
                 break
         if factorized_iterator is None:
             factorized_iterator = self.__prepare_dummy_iterator()
