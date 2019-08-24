@@ -2,17 +2,18 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 import tensorflow as tf
+from tensorflow.python.ops.losses.losses_impl import Reduction
 
-from src.model.layers.interpolation import resize_nn
-
+from src.model.layers.interpolation import resize_nn, resize_bilinear
 
 LabelsToIgnore = Optional[List[int]]
+LossWeights = Optional[List[float]]
 
 
 def cascade_loss(cascade_output_nodes: List[tf.Tensor],
                  y: tf.Tensor,
                  weight_decay: float = 0.0,
-                 cascade_loss_weights: Optional[List[float]] = None,
+                 loss_weights: LossWeights = None,
                  labels_to_ignore: LabelsToIgnore = None) -> tf.Operation:
     losses = []
     for output_node in cascade_output_nodes:
@@ -22,10 +23,10 @@ def cascade_loss(cascade_output_nodes: List[tf.Tensor],
             ignored_labels=labels_to_ignore)
         loss = tf.reduce_mean(loss)
         losses.append(loss)
-    if cascade_loss_weights is not None:
+    if loss_weights is not None:
         losses = _weight_losses(
             losses=losses,
-            cascade_loss_weights=cascade_loss_weights)
+            cascade_loss_weights=loss_weights)
     l2_loss = _create_l2_loss(weight_decay=weight_decay)
     return reduce(lambda acc, x: acc + x, losses) + l2_loss
 
@@ -84,3 +85,56 @@ def _create_l2_loss(weight_decay: float) -> tf.Operation:
         if 'kernel' in v.name
     ]
     return tf.add_n(l2_losses)
+
+
+def reconstruction_loss(cascade_output_nodes: List[tf.Tensor],
+                        y: tf.Tensor,
+                        loss_weights: LossWeights = None) -> tf.Operation:
+    losses = []
+    for output_node in cascade_output_nodes:
+        loss = _compute_branch_reconstruction_loss(
+            output_node=output_node,
+            y=y)
+        loss = tf.reduce_mean(loss)
+        losses.append(loss)
+    if loss_weights is not None:
+        losses = _weight_losses(
+            losses=losses,
+            cascade_loss_weights=loss_weights)
+    return reduce(lambda acc, x: acc + x, losses)
+
+
+def _compute_branch_reconstruction_loss(output_node: tf.Tensor,
+                                        y: tf.Tensor) -> tf.Operation:
+    print(f'output_node.shape: {output_node.shape}')
+    print(f'y.shape: {y.shape}')
+    target_size = output_node.shape[1:3]
+    resized_y = y
+    if target_size != resized_y.shape[1:3]:
+        resized_y = _resize_image(gt=resized_y, target_size=target_size)
+    mse_loss = tf.losses.mean_squared_error(
+        predictions=output_node,
+        labels=resized_y)
+    # variational_loss = _compute_variational_loss(output_node)
+    return mse_loss #+ variational_loss
+
+
+def _compute_variational_loss(x: tf.Tensor) -> tf.Operation:
+    height, width = x.shape[1].value, x.shape[2].value
+    a = tf.math.square(
+        x[:, :height - 1, :width - 1, :] - x[:, 1:, :width - 1, :]
+    )
+    b = tf.math.square(
+        x[:, :height - 1, :width - 1, :] - x[:, :height - 1, 1:, :]
+    )
+    return tf.math.reduce_mean(
+        tf.math.pow(a + b, 1.25)
+    )
+
+
+def _resize_image(gt: tf.Tensor,
+                  target_size: Tuple[tf.Dimension, tf.Dimension]) -> tf.Tensor:
+    return resize_bilinear(
+        x=gt,
+        height=target_size[0],
+        width=target_size[1])

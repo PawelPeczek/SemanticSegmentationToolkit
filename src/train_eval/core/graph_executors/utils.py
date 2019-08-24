@@ -60,7 +60,7 @@ class SessionOperations:
                  iterator: tf.data.Iterator,
                  loss_operations: tf.Operation,
                  gradient_update: tf.Operation,
-                 validation_operations: ValidationOperations):
+                 validation_operations: Optional[ValidationOperations]):
         self.__iterator = iterator
         self.__loss_operation = loss_operations
         self.__gradient_update = gradient_update

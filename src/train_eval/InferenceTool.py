@@ -2,7 +2,7 @@ from typing import Union
 
 from fire import Fire
 
-from src.train_eval.core.config_readers.InferenceConfigReader import InferenceConfigReader
+from src.common.config_utils import InferenceConfigReader
 from src.train_eval.core.inference_utils.StreamInferenceUtil import StreamInferenceUtil
 
 

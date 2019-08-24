@@ -3,12 +3,12 @@ from typing import Optional, List
 import tensorflow as tf
 
 from src.model.layers.conv import bottleneck_conv2d
-from src.model.losses.cascade import cascade_loss
-from src.model.network import NetworkOutput, RequiredNodes
+from src.model.losses.cascade import reconstruction_loss
+from src.model.network import NetworkOutput
 from src.model.predefined.ic_net_backbone import ICNetBackbone
 
 
-class ICNet(ICNetBackbone):
+class ICNetAutoEncoder(ICNetBackbone):
 
     def __init__(self,
                  output_classes: int,
@@ -16,28 +16,17 @@ class ICNet(ICNetBackbone):
                  ignore_labels: Optional[List[int]] = None,
                  config: Optional[dict] = None):
         super().__init__(
-            output_classes=output_classes,
+            output_classes=3,
             image_mean=image_mean,
-            ignore_labels=ignore_labels,
+            ignore_labels=None,
             config=config)
-        self.__weight_decay = 0.0
-        if 'weight_decay' in config:
-            self.__weight_decay = config['weight_decay']
-
-    def feed_forward(self,
-                     x: tf.Tensor,
-                     is_training: bool = True,
-                     nodes_to_return: RequiredNodes = None) -> NetworkOutput:
-        conv6_interp = super().feed_forward(
-            x=x,
-            is_training=is_training
-        )
-        out = tf.math.argmax(conv6_interp, axis=3, output_type=tf.dtypes.int32)
-        return self._construct_output(
-            feedforward_output=out,
-            nodes_to_return=nodes_to_return)
 
     def training_pass(self, x: tf.Tensor, y: tf.Tensor) -> tf.Operation:
+        if self._image_mean is not None:
+            x -= self._image_mean
+            y -= self._image_mean
+        x = tf.math.divide(x, 255.0)
+        y = tf.math.divide(y, 255.0)
         nodes_to_return = ['conv_sub4', 'conv_sub2', 'conv6_cls']
         model_output = self.feed_forward(
             x=x,
@@ -60,9 +49,14 @@ class ICNet(ICNetBackbone):
         )
         cls_outputs = [conv_sub4_cls, conv_sub2_cls, conv6_cls]
         cls_weights = [self._labmda_1, self._lambda_2, self._lambda_3]
-        return cascade_loss(
+        return reconstruction_loss(
             cascade_output_nodes=cls_outputs,
             y=y,
-            weight_decay=self.__weight_decay,
-            loss_weights=cls_weights,
-            labels_to_ignore=self._ignore_labels)
+            loss_weights=cls_weights)
+
+    def infer(self, x: tf.Tensor) -> NetworkOutput:
+        y_dash = super().infer(x)
+        y_dash = y_dash * 255.0
+        if self._image_mean is not None:
+            y_dash += self._image_mean
+        return tf.cast(y_dash, dtype=tf.uint8)

@@ -100,7 +100,6 @@ class GraphExecutorConfigReader(ConfigReader):
             base_dir_key='mapping_file')
         self._adjust_destination_size()
         if self.__reader_type == 'val':
-            self.__adjust_checkpoint_path()
             self._adjust_config_path(
                 config_path_key='checkpoint_name',
                 base_dir_key='model_dir')

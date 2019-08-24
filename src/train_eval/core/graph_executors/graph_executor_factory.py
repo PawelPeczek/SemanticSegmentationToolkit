@@ -31,8 +31,8 @@ class GraphExecutorType(Enum):
             'iterator_type': IteratorType.DUMMY_ITERATOR
         }
     )
-    GRAPH_VISUALISATION = (DatasetTransformationTestExecutor, {})
-    TEST_DATA_TRANSFORMATION = (VisualisationExecutor, {})
+    GRAPH_VISUALISATION = (VisualisationExecutor, {})
+    TEST_DATA_TRANSFORMATION = (DatasetTransformationTestExecutor, {})
 
 
 class GraphExecutorFactory:

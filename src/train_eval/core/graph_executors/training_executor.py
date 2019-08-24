@@ -1,6 +1,6 @@
 import tensorflow as tf
 import sys
-from typing import List, Union, Tuple
+from typing import List, Union, Tuple, Optional
 
 from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.iterators import IteratorType
@@ -47,7 +47,9 @@ class TrainingExecutor(GraphExecutor):
             x, y = iterator.get_next()
             loss = self._model.training_pass(x, y)
             gradient_update = minimize_loss(optimizer, loss)
-        validation_operations = self.__initialize_validation_operations()
+        validation_operations = None
+        if self._config.get_or_else('task', 'segmentation') == 'segmentation':
+            validation_operations = self.__initialize_validation_operations()
         sess_ops = SessionOperations(
             iterator=iterator,
             loss_operations=loss,
@@ -62,7 +64,9 @@ class TrainingExecutor(GraphExecutor):
             loss_operation, gradient_update = self.__distribute_training(
                 iterator=iterator,
                 optimizer=optimizer)
-            validation_operations = self.__initialize_validation_operations()
+            validation_operations = None
+            if self._config.get_or_else('task', 'segmentation') == 'segmentation':
+                validation_operations = self.__initialize_validation_operations()
             sess_ops = SessionOperations(
                 iterator=iterator,
                 loss_operations=loss_operation,
@@ -203,17 +207,17 @@ class TrainingExecutor(GraphExecutor):
 
     def __finish_epoch(self,
                        session: tf.Session,
-                       validation_ops: ValidationOperations,
+                       validation_ops: Optional[ValidationOperations],
                        epoch_id: int,
                        avg_error: Union[float, str]) -> None:
         print('\nAverage epoch loss: {}'.format(avg_error))
         train_acc, val_acc = None, None
-        if self.__should_measure_train_acc(epoch_id):
+        if self.__should_measure_train_acc(epoch_id) and validation_ops is not None:
             train_acc = self.__measure_miou(
                 session=session,
                 validation_operation=validation_ops.training_set_evaluation)
             print('\nmIoU acc on training set: {}%'.format(train_acc * 100))
-        if self.__should_measure_val_acc(epoch_id):
+        if self.__should_measure_val_acc(epoch_id) and validation_ops is not None:
             val_acc = self.__measure_miou(
                 session=session,
                 validation_operation=validation_ops.test_set_evaluation)

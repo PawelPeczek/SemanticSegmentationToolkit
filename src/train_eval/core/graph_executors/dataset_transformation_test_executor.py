@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
+import cv2 as cv
 
 from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.iterators import IteratorType
@@ -50,32 +51,56 @@ class DatasetTransformationTestExecutor(GraphExecutor):
                                  session: tf.Session,
                                  image: tf.Tensor,
                                  label: tf.Tensor):
-        mappings = get_id_to_color_mapping(self._config.mapping_file)
         while True:
             self.__proceed_inference_on_batch(
                 session=session,
                 image=image,
-                label=label,
-                mappings=mappings)
+                label=label)
 
     def __proceed_inference_on_batch(self,
                                      session: tf.Session,
                                      image: tf.Tensor,
-                                     label: tf.Tensor,
-                                     mappings: Id2ColorMapping) -> None:
-        base, gt = session.run([image, label])
+                                     label: tf.Tensor) -> None:
+        x, gt = session.run([image, label])
+        task = self._config.get_or_else('task', 'segmentation')
+        if task.lower() == 'segmentation':
+            self.__visualise_segmentation_input(x=x, gt=gt)
+        else:
+            self.__visualise_auto_encoding_input(x=x, gt=gt)
+
+    def __visualise_segmentation_input(self,
+                                       x: np.ndarray,
+                                       gt: np.ndarray) -> None:
+        mappings = get_id_to_color_mapping(self._config.mapping_file)
         fig = plt.figure(figsize=(20, 40))
-        for i in range(0, base.shape[0]):
-            to_show = base[i][..., ::-1]
-            fig.add_subplot(base.shape[0], 2, 2 * i + 1)
+        for i in range(0, x.shape[0]):
+            to_show = x[i][..., ::-1]
+            fig.add_subplot(x.shape[0], 2, 2 * i + 1)
             plt.imshow(to_show)
-            fig.add_subplot(base.shape[0], 2, 2 * i + 2)
+            fig.add_subplot(x.shape[0], 2, 2 * i + 2)
             ground_truth = gt[i]
             ground_truth = map_colour(ground_truth, mappings)
             plt.imshow(ground_truth)
         path = self._persistence_manager.generate_transformation_image_path()
         plt.savefig(path)
         plt.close()
+
+    def __visualise_auto_encoding_input(self,
+                                        x: np.ndarray,
+                                        gt: np.ndarray) -> None:
+        for i in range(0, x.shape[0]):
+            single_x = x[i][..., ::-1]
+            single_gt = gt[i][..., ::-1]
+            self.__persist_single_auto_encoding_input(
+                x=single_x,
+                gt=single_gt)
+
+    def __persist_single_auto_encoding_input(self,
+                                             x: np.ndarray,
+                                             gt: np.ndarray) -> None:
+        stacked_image = np.column_stack((x, gt))
+        path = self._persistence_manager.generate_transformation_image_path()
+        cv.imwrite(path, stacked_image)
 
     def __prepare_prediction_to_color_mapping(self) -> np.ndarray:
         mappings = get_id_to_color_mapping(self._config.mapping_file)
