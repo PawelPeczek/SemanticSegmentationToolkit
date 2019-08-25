@@ -1,17 +1,15 @@
 import os
-from copy import deepcopy
 from glob import glob
 import re
 from functools import reduce
 import math
 import numpy as np
-from threading import Thread
 from multiprocessing import Process
 import tensorflow as tf
 import cv2 as cv
 from typing import List, Tuple, Dict
 
-from src.dataset.core.DataPreProcessingConfigReader import DataPreProcessingConfigReader
+from src.common.config_utils import DataPreProcessingConfigReader
 from src.dataset.utils.mapping_utils import get_color_to_id_mapping
 from src.utils.filesystem_utils import create_directory
 

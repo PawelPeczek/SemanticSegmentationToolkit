@@ -132,7 +132,7 @@ class DataPreProcessingConfigReader(ConfigReader):
     __DEFAULT_CONFIG_PATH = os.path.join(
         os.path.dirname(__file__),
         '..',
-        'dataset',
+        'images',
         'config',
         'config.yml'
     )
