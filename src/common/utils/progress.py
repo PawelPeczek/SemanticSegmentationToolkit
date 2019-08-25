@@ -13,7 +13,7 @@ class ProgressReporter:
     def print_progress(self, clear_previous_line: bool = True) -> None:
         if self.__elements_to_process > 0:
             progress = self.__already_processed / self.__elements_to_process
-            progress = f'{progress:.2f}'
+            progress = f'{progress:.5f}%'
         else:
             progress = 'N/A'
         cr_placeholder = '\r' if clear_previous_line else ''

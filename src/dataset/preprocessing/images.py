@@ -1,7 +1,9 @@
+import math
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import partial
 from multiprocessing import Process
+from multiprocessing.managers import BaseManager
 from typing import List, Tuple, Dict, Optional
 import os
 import re
@@ -13,8 +15,9 @@ import numpy as np
 
 from src.common.config_utils import DataPreProcessingConfigReader
 from src.common.utils.progress import ProgressReporter
-from src.dataset.utils.mapping_utils import Color2IdMapping
-from src.utils.filesystem_utils import create_directory
+from src.dataset.utils.mapping_utils import Color2IdMapping, \
+    get_color_to_id_mapping
+from src.utils.filesystem_utils import create_directory, dump_content_to_csv
 
 
 class DatasetPart(Enum):
@@ -40,7 +43,12 @@ class DatasetPreprocessor:
             map(lambda e: e(dataset_dir, dataset_part), extractors)
         )
         samples = self.__prepare_samples(*extractors)
-
+        dataset_converter = _TFRecordsConverter(
+            dataset_part=dataset_part,
+            config=self.__config
+        )
+        dataset_converter.convert(samples)
+        self.__persist_samples_list(samples)
 
     def __prepare_samples(self,
                           examples_extractor: '_ExamplesExtractor',
@@ -52,6 +60,18 @@ class DatasetPreprocessor:
         return consolidator.connect_examples_with_ground_truths(
             examples=examples,
             ground_truths=gt
+        )
+
+    def __persist_samples_list(self, samples: List['Sample']) -> None:
+        samples = list(map(lambda s: s.to_compact_form(), samples))
+        target_path = os.path.join(
+            self.__config.dataset_dir,
+            self.__config.output_tfrecords_dir,
+            'samples_mapping.csv'
+        )
+        dump_content_to_csv(
+            file_path=target_path,
+            content=samples
         )
 
 
@@ -80,7 +100,10 @@ class _DataSetExtractor(ABC):
 class _GroundTruthsExtractor(_DataSetExtractor):
 
     def _file_is_valid(self, file_path: str) -> bool:
-        return file_path.endswith('_gtFine_color.png') and \
+        return (
+                       file_path.endswith('_gtFine_color.png') or
+                       file_path.endswith('_gtCoarse_color.png')
+                ) and \
                self._dataset_part.value in file_path
 
 
@@ -122,6 +145,11 @@ class Sample:
     def ground_truth(self) -> str:
         return self.__ground_truth_path
 
+    def to_compact_form(self) -> list:
+        return [
+            self.__sample_id, self.__example_path, self.__ground_truth_path
+        ]
+
 
 class _SamplesConsolidator:
 
@@ -148,10 +176,11 @@ class _SamplesConsolidator:
                                 examples: Dict[str, str],
                                 ground_truths: Dict[str, str]) -> List['Sample']:
         samples = []
-        for sample_id, (example_root, example_path) in enumerate(examples):
+        for sample_id, example_root in enumerate(examples):
             if example_root not in ground_truths:
                 logging.warning(f'Example {example_root} without ground truth.')
                 continue
+            example_path = examples[example_root]
             gt_path = ground_truths[example_root]
             sample = Sample(
                 sample_id=sample_id,
@@ -173,9 +202,32 @@ class _TFRecordsConverter:
     def convert(self, samples: List[Sample]) -> None:
         logging.info(f'Start creating *.tfrecords - '
                      f'{self.__dataset_part.value} set')
-        to_process = len(samples)
-        progress_reporter = ProgressReporter(elements_to_process=to_process)
+        self.__prepare_storage()
+        manager = self.__initialize_inter_process_communication_manager()
+        progress_reporter = manager.ProgressReporter(
+            elements_to_process=len(samples)
+        )
+        batches = self.__prepare_sample_batches(samples=samples)
+        workers = self.__prepare_workers(
+            batches=batches,
+            progress_reporter=progress_reporter
+        )
+        execution_supervisor = _ExecutionSupervisor(
+            max_parallel_workers=self.__config.max_workers
+        )
+        execution_supervisor.run_workers(workers)
+        manager.shutdown()
 
+    def __initialize_inter_process_communication_manager(self) -> BaseManager:
+        BaseManager.register('ProgressReporter', ProgressReporter)
+        manager = BaseManager()
+        manager.start()
+        return manager
+
+    def __prepare_sample_batches(self,
+                                 samples: List[Sample]) -> List[List[Sample]]:
+        batch_splitter = _Splitter(self.__config.binary_batch_size)
+        return  batch_splitter.split_into_batches(samples)
 
     def __prepare_storage(self) -> None:
         targer_dir_path = os.path.join(
@@ -183,6 +235,32 @@ class _TFRecordsConverter:
             self.__dataset_part.value
         )
         create_directory(targer_dir_path)
+
+    def __prepare_workers(self,
+                          batches: List[List[Sample]],
+                          progress_reporter: ProgressReporter
+                          ) -> List['_TFRecordsConversionWorker']:
+        color2id = get_color_to_id_mapping(self.__config.mapping_file)
+        workers = []
+        for batch_id, batch in enumerate(batches):
+            target_path = self.__prepare_target_path(batch_id)
+            worker = _TFRecordsConversionWorker(
+                target_path=target_path,
+                samples=batch,
+                color2id=color2id,
+                destination_size=self.__config.destination_size,
+                progress_reporter=progress_reporter
+            )
+            workers.append(worker)
+        return workers
+
+    def __prepare_target_path(self, batch_id: int) -> str:
+        tfrecords_file_name = f'{self.__config.tfrecords_base_name}-{batch_id}'
+        return os.path.join(
+            self.__config.output_tfrecords_dir,
+            self.__dataset_part.value,
+            tfrecords_file_name
+        )
 
 
 class _TFRecordsConversionWorker(Process):
@@ -214,6 +292,7 @@ class _TFRecordsConversionWorker(Process):
         example = self.__prepare_example(sample.example)
         gt = self.__prepare_gt(sample.ground_truth)
         data = {
+            'id': self.__wrap_int64(sample.id),
             'example': self.__wrap_bytes(example),
             'gt': self.__wrap_bytes(gt)
         }
@@ -221,6 +300,8 @@ class _TFRecordsConversionWorker(Process):
         example = tf.train.Example(features=feature)
         serialized = example.SerializeToString()
         writer.write(serialized)
+        if self.__progress_reporter is not None:
+            self.__progress_reporter.report_processed_element()
 
     def __prepare_example(self, example_path: str) -> bytes:
         example = self.__load_image(
@@ -257,6 +338,9 @@ class _TFRecordsConversionWorker(Process):
     def __wrap_bytes(self, value: bytes) -> tf.train.Feature:
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
+    def __wrap_int64(self, value: int) -> tf.train.Feature:
+        return tf.train.Feature(int64_list=tf.train.Int64List(value=[value]))
+
 
 class _GroundTruthClassMapper:
 
@@ -274,3 +358,46 @@ class _GroundTruthClassMapper:
                 return 0
 
         return np.apply_along_axis(class_mapper, 2, ground_truth)
+
+
+class _Splitter:
+
+    def __init__(self, batch_size: int):
+        self.__batch_size = batch_size
+
+    def split_into_batches(self, samples: list) -> List[list]:
+        batches_raw_number = len(samples) / self.__batch_size
+        full_batches_number = int(math.floor(batches_raw_number))
+        not_full_batch_exists = len(samples) % self.__batch_size
+        batches = []
+        for i in range(full_batches_number):
+            start_idx = i * self.__batch_size
+            end_idx = (i + 1) * self.__batch_size
+            batch = samples[start_idx:end_idx]
+            batches.append(batch)
+        if not_full_batch_exists:
+            start_idx = full_batches_number * self.__batch_size
+            batch = samples[start_idx:]
+            batches.append(batch)
+        return batches
+
+
+class _ExecutionSupervisor:
+
+    def __init__(self, max_parallel_workers: int):
+        self.__max_parallel_workers = max_parallel_workers
+
+    def run_workers(self, workers: List[_TFRecordsConversionWorker]) -> None:
+        splitter = _Splitter(self.__max_parallel_workers)
+        workers_batches = splitter.split_into_batches(workers)
+        for workers_batch in workers_batches:
+            self.__run_workers_batch(workers_batch)
+
+    def __run_workers_batch(self,
+                            workers_batch: List[_TFRecordsConversionWorker]
+                            ) -> None:
+        for worker in workers_batch:
+            worker.start()
+        for worker in workers_batch:
+            worker.join()
+

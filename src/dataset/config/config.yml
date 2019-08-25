@@ -1,7 +1,7 @@
-dataset_dir: '/home/ppeczek/Dokumenty/CityScapes-coarse'
+dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
 gt_dir: 'gtCoarse'
 examples_dir: 'leftImg8bit'
-output_tfrecords_dir: 'tfrecords-full-size'
+output_tfrecords_dir: 'tfrecords-new-pipeline'
 mapping_file: 'mappings.yaml'
 destination_size: [2048, 1024]
 binary_batch_size: 100

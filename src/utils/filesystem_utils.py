@@ -1,7 +1,16 @@
 import os
-from typing import Dict
+import csv
+from typing import Dict, List
 
 import yaml
+
+
+def dump_content_to_csv(file_path: str, content: List[list]) -> None:
+    target_dir = os.path.dirname(file_path)
+    create_directory(target_dir)
+    with open(file_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(content)
 
 
 def create_directory(directory_path):

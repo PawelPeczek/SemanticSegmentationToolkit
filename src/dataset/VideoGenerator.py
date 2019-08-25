@@ -1,6 +1,6 @@
 from fire import Fire
 
-from src.dataset.preprocessing.VideoPreprocessor import VideoPreprocessor
+from src.dataset.preprocessing.video import VideoPreprocessor
 
 
 class VideoGenerator:
