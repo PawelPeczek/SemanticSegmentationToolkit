@@ -154,3 +154,20 @@ class DataPreProcessingConfigReader(ConfigReader):
             self._adjust_config_path(
                 config_path_key=key,
                 base_dir_key='dataset_dir')
+
+
+class DataAnalysisConfigReader(ConfigReader):
+
+    __DEFAULT_CONFIG_PATH = os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'dataset',
+        'config',
+        'analysis_config.yml'
+    )
+
+    def _get_default_config_path(self) -> str:
+        return DataAnalysisConfigReader.__DEFAULT_CONFIG_PATH
+
+    def _adjust_config_dict(self) -> None:
+        pass

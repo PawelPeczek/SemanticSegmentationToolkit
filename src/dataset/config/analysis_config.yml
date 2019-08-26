@@ -1,0 +1,5 @@
+gt_list: 'path_to_images_list.csv'
+mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+analysis_config:
+  method_1:
+    option_1: 'value'
