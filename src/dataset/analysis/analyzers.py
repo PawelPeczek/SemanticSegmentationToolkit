@@ -39,6 +39,23 @@ class GroundTruthAnalysisConsolidator(ABC):
         raise RuntimeError('This method must be implemented by derived class.')
 
 
+class AnalysisCouple:
+
+    def __init__(self,
+                 analyzer: GroundTruthAnalyzer,
+                 consolidator: GroundTruthAnalysisConsolidator):
+        self.__analyzer = analyzer
+        self.__consolidator = consolidator
+
+    @property
+    def analyzer(self) -> GroundTruthAnalyzer:
+        return self.__analyzer
+
+    @property
+    def consolidator(self) -> GroundTruthAnalysisConsolidator:
+        return self.__consolidator
+    
+
 class ClassOccupationAnalyzer(GroundTruthAnalyzer):
 
     def analyze(self, ground_truth: PreprocessedGroundTruth) -> AnalysisResult:

@@ -8,7 +8,7 @@ from src.dataset.analysis.primitives import PreprocessedGroundTruth, \
 from src.dataset.utils.mapping_utils import Color2IdMapping, Color
 
 
-class _GroundTruthPreprocessor:
+class GroundTruthPreprocessor:
 
     def __init__(self, color2id: Color2IdMapping):
         self.__color2id = color2id

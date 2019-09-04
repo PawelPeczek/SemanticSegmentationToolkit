@@ -1,5 +1,17 @@
-gt_list: 'path_to_images_list.csv'
+images_path: 'path_to_images_list.transoformation_options'
+target_size: [2048, 1024]
 mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
 analysis_config:
-  method_1:
-    option_1: 'value'
+  to_be_used: [
+    'class_occupation',
+    'class_average',
+    'poly_line_complexity',
+    'instances_analyzer',
+    'receptive_field'
+  ]
+  configurable:
+    receptive_field:
+      analyzer:
+        mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+        kernel_size: [5, 5]
+        stride: [2, 2]
