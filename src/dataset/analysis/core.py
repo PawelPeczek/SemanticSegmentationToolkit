@@ -1,5 +1,8 @@
+from functools import partial, reduce
 from typing import List, Optional
 import logging
+from datetime import datetime
+import os
 
 import numpy as np
 import cv2 as cv
@@ -13,7 +16,7 @@ from src.dataset.analysis.primitives import AnalysisResult, \
     PreprocessedGroundTruth
 from src.dataset.analysis.utils import GroundTruthPreprocessor
 from src.dataset.utils.mapping_utils import get_color_to_id_mapping
-from src.utils.filesystem_utils import read_csv_file, read_text_file_lines
+from src.utils.filesystem_utils import read_text_file_lines, dump_text_file
 
 
 class AnalysisManager:
@@ -23,14 +26,23 @@ class AnalysisManager:
         self.__chain_assembler = _ProcessingChainAssembler(
             config=config.analysis_config
         )
+        self.__analysis_processor = _AnalysisProcessor(
+            mapping_path=config.mapping_path
+        )
+        self.__saver = _ResultsSaver()
 
     def run_analysis(self) -> None:
         files_to_process = read_text_file_lines(self.__config.images_path)
         images = self.__prepare_images(files_to_process=files_to_process)
         analysis_couples = self.__chain_assembler.assembly_processing_chain()
-        analysis_results = self.__proceed_analysis(
+        analysis_results = self.__analysis_processor.proceed_analysis(
             images=images,
             analysis_couples=analysis_couples
+        )
+        self.__saver.persist_results(
+            target_dir=self.__config.results_dir,
+            analysis_results=analysis_results,
+            analyzed_files=files_to_process
         )
 
     def __prepare_images(self,
@@ -131,20 +143,24 @@ class _AnalysisProcessor:
                          images: List[np.ndarray],
                          analysis_couples: List[AnalysisCouple]
                          ) -> List[AnalysisResult]:
+        analyze_image = partial(
+            self.__analyze_image,
+            analysis_couples=analysis_couples
+        )
+        logging.info('Analysis in progress...')
+        analyzed_images = list(map(analyze_image, tqdm(images)))
+        return self.__summarize_results(
+            analysis_couples=analysis_couples,
+            analyzed_images=analyzed_images
+        )
 
     def __analyze_image(self,
-                      image: np.ndarray,
-                      analysis_couples: List[AnalysisCouple],
-                      ) -> List[AnalysisCouple]:
+                        image: np.ndarray,
+                        analysis_couples: List[AnalysisCouple],
+                        ) -> List[AnalysisResult]:
         preprocessed_ground_truth = self.__preprocessor.preprocess(image=image)
-
-    def __proceed_analysis(self,
-                           ground_truth: PreprocessedGroundTruth,
-                           analysis_couples: List[AnalysisCouple],
-                           ) -> List[AnalysisResult]:
-
-        current_analysis = self.__analyze_current_ground_truth(
-            ground_truth=ground_truth,
+        return self.__analyze_current_ground_truth(
+            ground_truth=preprocessed_ground_truth,
             analysis_couples=analysis_couples
         )
 
@@ -152,6 +168,77 @@ class _AnalysisProcessor:
                                        ground_truth: PreprocessedGroundTruth,
                                        analysis_couples: List[AnalysisCouple]
                                        ) -> List[AnalysisResult]:
+        analyzers = map(lambda c: c.analyzer, analysis_couples)
+        proceed_single_analysis = partial(
+            self.__proceed_single_analysis,
+            ground_truth=ground_truth
+        )
+        return list(map(proceed_single_analysis, analyzers))
 
+    def __proceed_single_analysis(self,
+                                  analyzer: GroundTruthAnalyzer,
+                                  ground_truth: PreprocessedGroundTruth
+                                  ) -> AnalysisResult:
+        return analyzer.analyze(ground_truth)
+
+    def __summarize_results(self,
+                            analysis_couples: List[AnalysisCouple],
+                            analyzed_images: List[List[AnalysisResult]]
+                            ) -> List[AnalysisResult]:
+        logging.info('Consolidation in progress...')
+        consolidators = list(map(lambda c: c.consolidator, analysis_couples))
+        analysis_reductor = partial(
+            self.__analysis_reductor,
+            consolidators=consolidators
+        )
+        return reduce(analysis_reductor, tqdm(analyzed_images))
+
+    def __analysis_reductor(self,
+                            acc: List[AnalysisResult],
+                            next_elements: List[AnalysisResult],
+                            consolidators: List[GroundTruthAnalysisConsolidator]
+                            ) -> List[AnalysisResult]:
+        results = []
+        iterator = zip(consolidators, acc, next_elements)
+        for consolidator, already_consolidated, to_consolidate in iterator:
+            consolidated = consolidator.consolidate(
+                already_consolidated=already_consolidated,
+                to_consolidate=to_consolidate
+            )
+            results.append(consolidated)
+        return results
+
+
+class _ResultsSaver:
+
+    def persist_results(self,
+                        target_dir: str,
+                        analysis_results: List[AnalysisResult],
+                        analyzed_files: List[str]
+                        ) -> None:
+        target_path = self.__generate_target_file_path(target_dir=target_dir)
+        analysis_summary = self.__create_analysis_summary(analysis_results)
+        analyzed_files = '\n'.join(analyzed_files)
+        summary_text = f'{analysis_summary}\n\n' \
+            f'Analyzed files:\n{analyzed_files}'
+        dump_text_file(target_path, summary_text)
+        logging.info(f'Results were saved under {target_path}')
+
+    def __generate_target_file_path(self, target_dir: str) -> str:
+        now = datetime.now()
+        timestamp = now.strftime("%m_%d_%Y_%H_%M_%S")
+        return os.path.join(
+            target_dir,
+            f'{timestamp}.log'
+        )
+
+    def __create_analysis_summary(self,
+                                  analysis_results: List[AnalysisResult]
+                                  ) -> str:
+        summaries = []
+        for result in analysis_results:
+            single_summary = f'Name: {result.name}, value: {result.value}'
+            summaries.append(single_summary)
+        return '\n'.join(summaries)
 
 

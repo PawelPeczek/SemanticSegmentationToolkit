@@ -39,3 +39,10 @@ def read_text_file_lines(file_path: str) -> List[str]:
         line = line.strip()
         file_content.append(line)
     return file_content
+
+
+def dump_text_file(file_path: str, content: str) -> None:
+    dir_path = os.path.dirname(file_path)
+    create_directory(directory_path=dir_path)
+    with open(file_path, 'w') as f:
+        f.write(content)

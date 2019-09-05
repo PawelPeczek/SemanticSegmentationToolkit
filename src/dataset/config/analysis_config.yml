@@ -1,6 +1,7 @@
 images_path: 'path_to_images_list.transoformation_options'
 target_size: [2048, 1024]
 mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+results_dir: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis'
 analysis_config:
   to_be_used: [
     'class_occupation',
