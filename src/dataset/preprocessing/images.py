@@ -47,8 +47,8 @@ class DatasetPreprocessor:
             dataset_part=dataset_part,
             config=self.__config
         )
-        dataset_converter.convert(samples)
-        self.__persist_samples_list(samples)
+        dataset_converter.convert(samples=samples)
+        self.__persist_samples_list(samples=samples, dataset_part=dataset_part)
 
     def __prepare_samples(self,
                           examples_extractor: '_ExamplesExtractor',
@@ -62,12 +62,14 @@ class DatasetPreprocessor:
             ground_truths=gt
         )
 
-    def __persist_samples_list(self, samples: List['Sample']) -> None:
+    def __persist_samples_list(self,
+                               dataset_part: DatasetPart,
+                               samples: List['Sample']) -> None:
         samples = list(map(lambda s: s.to_compact_form(), samples))
         target_path = os.path.join(
             self.__config.dataset_dir,
             self.__config.output_tfrecords_dir,
-            'samples_mapping.csv'
+            f'{dataset_part.name}_samples_mapping.csv'
         )
         dump_content_to_csv(
             file_path=target_path,
