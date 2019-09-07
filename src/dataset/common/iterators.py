@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 import os
+from functools import partial
 from typing import List, Tuple, Union, Optional
 
 import tensorflow as tf
@@ -11,7 +12,11 @@ import random
 
 from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.DatasetTransformer import DatasetTransformer
-from src.model.layers.interpolation import resize_bilinear
+
+SimpleSegmentationExample = Tuple[tf.Tensor, tf.Tensor]
+IndexedSegmentationExample = Tuple[tf.Tensor, tf.Tensor, tf.Tensor]
+SegmentationExample = \
+    Union[SimpleSegmentationExample, IndexedSegmentationExample]
 
 
 class CityScapesIterator(ABC):
@@ -39,11 +44,16 @@ class CityScapesIterator(ABC):
 
     def _get_dummy_segmentation_iterator(self,
                                          tfrecords_to_include: Union[str, int],
-                                         batch_size: int) -> tf.data.Dataset:
+                                         batch_size: int,
+                                         ) -> tf.data.Dataset:
         tfrecords_filenames = self._get_tfrecords_list('val')
         if tfrecords_to_include != 'all':
             tfrecords_filenames = tfrecords_filenames[:tfrecords_to_include]
-        return self.__get_segmentation_dataset(tfrecords_filenames, batch_size)
+        return self.__get_segmentation_dataset(
+            tfrecords_filenames=tfrecords_filenames,
+            batch_size=batch_size,
+            include_index=False
+        )
 
     def _get_tfrecords_list(self, subset_name: str) -> List[str]:
         tfrecords_base_dir = self._config.tfrecords_dir
@@ -57,46 +67,66 @@ class CityScapesIterator(ABC):
     def _get_one_shot_segmentation_iterator(self,
                                             tfrecords_filenames: List[str],
                                             batch_size: int,
-                                            augmented: bool = False) -> tf.data.Iterator:
+                                            augmented: bool = False,
+                                            include_index: bool = False
+                                            ) -> tf.data.Iterator:
         dataset = self.__get_segmentation_dataset(
             tfrecords_filenames=tfrecords_filenames,
             batch_size=batch_size,
-            augmented=augmented)
+            include_index=include_index,
+            augmented=augmented
+        )
         return dataset.make_one_shot_iterator()
 
     def _get_initializable_segmentation_iterator(self,
                                                  tfrecords_filenames: List[str],
                                                  batch_size: int,
-                                                 augmented: bool = False) -> tf.data.Iterator:
+                                                 augmented: bool = False,
+                                                 include_index: bool = False
+                                                 ) -> tf.data.Iterator:
         dataset = self.__get_segmentation_dataset(
             tfrecords_filenames=tfrecords_filenames,
             batch_size=batch_size,
+            include_index=include_index,
             augmented=augmented)
         return dataset.make_initializable_iterator()
 
     def __get_segmentation_dataset(self,
                                    tfrecords_filenames: List[str],
                                    batch_size: int,
-                                   augmented: bool = False) -> tf.data.Dataset:
+                                   augmented: bool = False,
+                                   include_index: bool = False
+                                   ) -> tf.data.Dataset:
         num_cpu = multiprocessing.cpu_count()
         dataset = tf.data.TFRecordDataset(
             tfrecords_filenames,
             num_parallel_reads=num_cpu)
-        dataset = dataset.map(self.__parse_tfrecords, num_parallel_calls=num_cpu)
+        parse_tfrecords = partial(
+            self.__parse_tfrecords,
+            include_index=include_index
+        )
+        dataset = dataset.map(
+            parse_tfrecords,
+            num_parallel_calls=num_cpu
+        )
         if augmented is True:
             dataset_transformer = DatasetTransformer(self._config)
             dataset = dataset.map(
                 dataset_transformer.augment_data,
-                num_parallel_calls=num_cpu)
+                num_parallel_calls=num_cpu
+            )
         dataset = dataset.shuffle(buffer_size=8 * batch_size)
         dataset = dataset.batch(batch_size=batch_size)
         dataset = dataset.prefetch(8 * batch_size)
         return dataset
 
     def __parse_tfrecords(self,
-                          serialized_example: tf.string) -> Tuple[tf.Tensor, tf.Tensor]:
+                          serialized_example: tf.string,
+                          include_index: bool
+                          ) -> SegmentationExample:
         features = \
             {
+                'id': tf.FixedLenFeature([], tf.int64),
                 'example': tf.FixedLenFeature([], tf.string),
                 'gt': tf.FixedLenFeature([], tf.string)
             }
@@ -114,11 +144,16 @@ class CityScapesIterator(ABC):
         label = tf.decode_raw(label_raw, tf.uint8)
         label = tf.cast(label, tf.int32)
         label = tf.reshape(label, destination_size)
-        return image, label
+        idx = parsed_example['id']
+        if include_index:
+            return idx, image, label
+        else:
+            return image, label
 
     def _get_training_auto_encoding_dataset(self,
                                             batch_size: int,
-                                            max_examples: Optional[int] = None) -> tf.data.Dataset:
+                                            max_examples: Optional[int] = None
+                                            ) -> tf.data.Dataset:
         examples_list_path = self._config.training_examples_list
         return self._get_auto_encoding_dataset(
             examples_list_path=examples_list_path,
@@ -127,7 +162,8 @@ class CityScapesIterator(ABC):
 
     def _get_validation_auto_encoding_dataset(self,
                                               batch_size: int,
-                                              max_examples: Optional[int] = None) -> tf.data.Dataset:
+                                              max_examples: Optional[int] = None
+                                              ) -> tf.data.Dataset:
         examples_list_path = self._config.validation_examples_list
         return self._get_auto_encoding_dataset(
             examples_list_path=examples_list_path,
@@ -137,11 +173,14 @@ class CityScapesIterator(ABC):
     def _get_auto_encoding_dataset(self,
                                    examples_list_path: str,
                                    batch_size: int,
-                                   max_examples: Optional[int] = None) -> tf.data.Dataset:
+                                   max_examples: Optional[int] = None
+                                   ) -> tf.data.Dataset:
         num_cpu = multiprocessing.cpu_count()
         dataset = tf.contrib.data.CsvDataset(
             filenames=[examples_list_path],
             record_defaults=[tf.string])
+        if max_examples is not None:
+            dataset = dataset.take(max_examples)
         dataset = dataset.map(self.__parse_csv, num_parallel_calls=num_cpu)
         dataset = dataset.shuffle(buffer_size=8 * batch_size)
         dataset = dataset.batch(batch_size=batch_size)
@@ -227,7 +266,9 @@ class OneShotValidationIterator(CityScapesIterator):
         tfrecords_filenames = self._get_tfrecords_list('val')
         return self._get_one_shot_segmentation_iterator(
             tfrecords_filenames=tfrecords_filenames,
-            batch_size=self._config.batch_size)
+            batch_size=self._config.batch_size,
+            include_index=True
+        )
 
     def build_auto_encoding_iterator(self) -> tf.data.Iterator:
         batch_size = self._config.batch_size
@@ -256,7 +297,9 @@ class InitializableValidationIterator(CityScapesIterator):
         tfrecords_filenames = self._get_tfrecords_list('val')
         return self._get_initializable_segmentation_iterator(
             tfrecords_filenames=tfrecords_filenames,
-            batch_size=self._config.batch_size)
+            batch_size=self._config.batch_size,
+            include_index=True
+        )
 
     def build_auto_encoding_iterator(self) -> tf.data.Iterator:
         batch_size = self._config.batch_size

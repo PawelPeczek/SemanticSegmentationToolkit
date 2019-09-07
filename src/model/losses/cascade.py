@@ -2,7 +2,6 @@ from functools import reduce
 from typing import List, Optional, Tuple
 
 import tensorflow as tf
-from tensorflow.python.ops.losses.losses_impl import Reduction
 
 from src.model.layers.interpolation import resize_nn, resize_bilinear
 
@@ -106,8 +105,6 @@ def reconstruction_loss(cascade_output_nodes: List[tf.Tensor],
 
 def _compute_branch_reconstruction_loss(output_node: tf.Tensor,
                                         y: tf.Tensor) -> tf.Operation:
-    print(f'output_node.shape: {output_node.shape}')
-    print(f'y.shape: {y.shape}')
     target_size = output_node.shape[1:3]
     resized_y = y
     if target_size != resized_y.shape[1:3]:

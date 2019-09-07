@@ -176,7 +176,8 @@ class _SamplesConsolidator:
 
     def __proceed_consolidation(self,
                                 examples: Dict[str, str],
-                                ground_truths: Dict[str, str]) -> List['Sample']:
+                                ground_truths: Dict[str, str]
+                                ) -> List['Sample']:
         samples = []
         for sample_id, example_root in enumerate(examples):
             if example_root not in ground_truths:

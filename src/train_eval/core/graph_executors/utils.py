@@ -114,8 +114,13 @@ def assign_to_device(target_device: str,
 def get_validation_operation(iterator: tf.data.Iterator,
                              model: Network,
                              num_classes: int,
-                             labels_to_ignore: LabelsToIgnore = None) -> ValidationOperation:
-    x, y = iterator.get_next()
+                             labels_to_ignore: LabelsToIgnore = None
+                             ) -> ValidationOperation:
+    element = iterator.get_next()
+    if len(element) is 2:
+        x, y = element
+    else:
+        _, x, y = element
     prediction = model.infer(x)
     weights = None
     if labels_to_ignore is not None:

@@ -49,8 +49,10 @@ class GraphExecutor(ABC):
 
     def __construct_model(self) -> Network:
         model_factory = ModelFactory()
+        print(f'd:{self._config.get_or_else("ignore_labels", None)}')
         return model_factory.assembly(
-            self._config.model_name,
-            self._config.num_classes,
-            self._config.get_or_else('ignore_labels', None),
-            self._config.get_or_else('model_config', None))
+            model_name=self._config.model_name,
+            output_classes=self._config.num_classes,
+            ignore_labels=self._config.get_or_else('ignore_labels', None),
+            model_config=self._config.get_or_else('model_config', None)
+        )

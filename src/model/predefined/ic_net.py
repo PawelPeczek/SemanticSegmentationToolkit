@@ -21,7 +21,7 @@ class ICNet(ICNetBackbone):
             ignore_labels=ignore_labels,
             config=config)
         self.__weight_decay = 0.0
-        if 'weight_decay' in config:
+        if config is not None and 'weight_decay' in config:
             self.__weight_decay = config['weight_decay']
 
     def feed_forward(self,

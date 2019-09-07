@@ -1,9 +1,9 @@
 mode: 'train'
-task: 'auto-encoding' # 'segmentation'
+task: 'segmentation' # 'segmentation' / 'auto-encoding
 training_examples_list: '/home/ppeczek/Dokumenty/CityScapes/train_list.csv'
 validation_examples_list: '/home/ppeczek/Dokumenty/CityScapes/val_list.csv'
 dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
-tfrecords_dir: 'tfrecords-full-size'
+tfrecords_dir: 'tfrecords-new-pipeline'
 mapping_file: 'mappings.yaml'
 destination_size: [2048, 1024]
 img_mean: [103.939, 116.779, 123.68]
@@ -16,7 +16,7 @@ optimizer_options:
 #  optimizer_name: 'Momentum'
 #  learning_rate: 0.001
 #  momentum: 0.9
-model_name: 'ICNetAutoEncoder'
+model_name: 'ICNet'
 num_classes: 20
 ignore_labels: [0]
 model_config:

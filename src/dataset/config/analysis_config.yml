@@ -1,4 +1,4 @@
-images_path: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis/small_gt_val_list.txt'
+images_path: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis/gt_val_list.txt'
 target_size: [2048, 1024]
 workers: 24
 mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'

@@ -3,7 +3,8 @@ from typing import Optional, Tuple
 
 import tensorflow as tf
 
-from src.dataset.common.transformations.TransformationType import TransformationType
+from src.dataset.common.transformations.TransformationType import \
+    TransformationType
 
 
 class DatasetTransformation(ABC):
@@ -12,8 +13,12 @@ class DatasetTransformation(ABC):
         self._transformation_type = transformation_type
 
     @abstractmethod
-    def apply(self, image: tf.Tensor, label: tf.Tensor, application_probab: float,
-              parameters: Optional[dict]) -> Tuple[tf.Tensor, tf.Tensor]:
+    def apply(self,
+              image: tf.Tensor,
+              label: tf.Tensor,
+              application_probab: float,
+              parameters: Optional[dict]
+              ) -> Tuple[tf.Tensor, tf.Tensor]:
         raise NotImplementedError('This method must be implemented')
 
     def get_transformation_type(self) -> TransformationType:
