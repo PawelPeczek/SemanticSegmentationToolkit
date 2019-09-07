@@ -1,4 +1,7 @@
+import math
 from functools import partial, reduce
+from multiprocessing import Process, Queue
+from multiprocessing.pool import Pool
 from typing import List, Optional
 import logging
 from datetime import datetime
@@ -27,7 +30,8 @@ class AnalysisManager:
             config=config.analysis_config
         )
         self.__analysis_processor = _AnalysisProcessor(
-            mapping_path=config.mapping_path
+            mapping_path=config.mapping_path,
+            mapping_workers_number=config.workers
         )
         self.__saver = _ResultsSaver()
 
@@ -93,7 +97,7 @@ class _ProcessingChainAssembler:
 
     def __get_configurable_kwargs(self, name: str) -> dict:
         if name in self.__config['configurable']:
-            kwargs = self.__config['configurable']
+            kwargs = self.__config['configurable'][name]
         else:
             kwargs = None
         return kwargs
@@ -119,7 +123,7 @@ class _ProcessingChainAssembler:
 
     def __extract_dict_key(self, dictionary: dict, key: str) -> Optional[dict]:
         if dictionary is not None and key in dictionary:
-            result = dictionary['analyzer']
+            result = dictionary[key]
         else:
             result = None
         return result
@@ -133,53 +137,80 @@ class _ProcessingChainAssembler:
 
 class _AnalysisProcessor:
 
-    def __init__(self, mapping_path: str):
+    def __init__(self,
+                 mapping_path: str,
+                 mapping_workers_number: int
+                 ):
         mapping = get_color_to_id_mapping(mapping_path=mapping_path)
         self.__preprocessor = GroundTruthPreprocessor(
             color2id=mapping
         )
+        self.__mapping_workers_number = mapping_workers_number
 
     def proceed_analysis(self,
                          images: List[np.ndarray],
                          analysis_couples: List[AnalysisCouple]
                          ) -> List[AnalysisResult]:
-        analyze_image = partial(
-            self.__analyze_image,
+        analyzed_images = self.__run_analysis(
+            images=images,
             analysis_couples=analysis_couples
         )
-        logging.info('Analysis in progress...')
-        analyzed_images = list(map(analyze_image, tqdm(images)))
         return self.__summarize_results(
             analysis_couples=analysis_couples,
             analyzed_images=analyzed_images
         )
 
-    def __analyze_image(self,
-                        image: np.ndarray,
-                        analysis_couples: List[AnalysisCouple],
+    def __run_analysis(self,
+                       images: List[np.ndarray],
+                       analysis_couples: List[AnalysisCouple]
+                       ) -> List[List[AnalysisResult]]:
+        logging.info('Analysis in progress...')
+        images_for_workers = _ListSplitter.split_list(
+            to_split=images,
+            chunks_number=self.__mapping_workers_number
+        )
+        result_queue = Queue()
+        workers = self.__initialize_workers(
+            images_for_workers=images_for_workers,
+            analysis_couples=analysis_couples,
+            result_queue=result_queue
+        )
+        analysis_results = self.__fetch_results(
+            queue=result_queue,
+            expected_elements_number=len(images)
+        )
+        self.__stop_workers(workers)
+        return analysis_results
+
+    def __initialize_workers(self,
+                             images_for_workers: List[List[np.ndarray]],
+                             analysis_couples: List[AnalysisCouple],
+                             result_queue: Queue
+                             ) -> List[Process]:
+        worker_init = partial(
+            _AnalysisWorker,
+            analysis_couples=analysis_couples,
+            preprocessor=self.__preprocessor,
+            result_queue=result_queue
+        )
+        workers = list(map(worker_init, images_for_workers))
+        for worker in workers:
+            worker.start()
+        return workers
+
+    def __fetch_results(self,
+                        queue: Queue,
+                        expected_elements_number: int,
                         ) -> List[AnalysisResult]:
-        preprocessed_ground_truth = self.__preprocessor.preprocess(image=image)
-        return self.__analyze_current_ground_truth(
-            ground_truth=preprocessed_ground_truth,
-            analysis_couples=analysis_couples
-        )
+        results = []
+        for _ in tqdm(range(expected_elements_number)):
+            result = queue.get()
+            results.append(result)
+        return results
 
-    def __analyze_current_ground_truth(self,
-                                       ground_truth: PreprocessedGroundTruth,
-                                       analysis_couples: List[AnalysisCouple]
-                                       ) -> List[AnalysisResult]:
-        analyzers = map(lambda c: c.analyzer, analysis_couples)
-        proceed_single_analysis = partial(
-            self.__proceed_single_analysis,
-            ground_truth=ground_truth
-        )
-        return list(map(proceed_single_analysis, analyzers))
-
-    def __proceed_single_analysis(self,
-                                  analyzer: GroundTruthAnalyzer,
-                                  ground_truth: PreprocessedGroundTruth
-                                  ) -> AnalysisResult:
-        return analyzer.analyze(ground_truth)
+    def __stop_workers(self, workers: List[Process]) -> None:
+        for worker in workers:
+            worker.join()
 
     def __summarize_results(self,
                             analysis_couples: List[AnalysisCouple],
@@ -207,6 +238,64 @@ class _AnalysisProcessor:
             )
             results.append(consolidated)
         return results
+
+
+class _ListSplitter:
+
+    @staticmethod
+    def split_list(to_split: list, chunks_number: int) -> List[list]:
+        chunk_size = int(math.ceil(len(to_split) / chunks_number))
+        result = []
+        for i in range(chunks_number):
+            start_idx, end_idx = i * chunk_size, (i + 1) * chunk_size
+            chunk = to_split[start_idx: end_idx]
+            result.append(chunk)
+        return result
+
+
+class _AnalysisWorker(Process):
+
+    def __init__(self,
+                 images: List[np.ndarray],
+                 analysis_couples: List[AnalysisCouple],
+                 preprocessor: GroundTruthPreprocessor,
+                 result_queue: Queue):
+        super().__init__()
+        self.__images = images
+        self.__analysis_couples = analysis_couples
+        self.__preprocessor = preprocessor
+        self.__result_queue = result_queue
+
+    def run(self) -> None:
+        for image in self.__images:
+            analysis_result = self.__analyze_image(image=image)
+            self.__result_queue.put(analysis_result)
+        self.__result_queue.close()
+        self.__result_queue.join_thread()
+
+    def __analyze_image(self,
+                        image: np.ndarray,
+                        ) -> List[AnalysisResult]:
+        preprocessed_ground_truth = self.__preprocessor.preprocess(image=image)
+        return self.__analyze_current_ground_truth(
+            ground_truth=preprocessed_ground_truth,
+        )
+
+    def __analyze_current_ground_truth(self,
+                                       ground_truth: PreprocessedGroundTruth,
+                                       ) -> List[AnalysisResult]:
+        analyzers = map(lambda c: c.analyzer, self.__analysis_couples)
+        proceed_single_analysis = partial(
+            self.__proceed_single_analysis,
+            ground_truth=ground_truth
+        )
+        return list(map(proceed_single_analysis, analyzers))
+
+    def __proceed_single_analysis(self,
+                                  analyzer: GroundTruthAnalyzer,
+                                  ground_truth: PreprocessedGroundTruth
+                                  ) -> AnalysisResult:
+        return analyzer.analyze(ground_truth)
 
 
 class _ResultsSaver:

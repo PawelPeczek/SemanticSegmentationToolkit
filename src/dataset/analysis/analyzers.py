@@ -83,16 +83,19 @@ class ClassOccupationAnalyzer(GroundTruthAnalyzer):
 class ClassAverageConsolidator(GroundTruthAnalysisConsolidator):
 
     def consolidate(self,
-                    accumulator: AnalysisResult,
+                    already_consolidated: AnalysisResult,
                     to_consolidate: AnalysisResult) -> AnalysisResult:
+        print('DUPA:')
+        print(already_consolidated)
+        print(to_consolidate)
         new_value = self.__connect_values(
-            accumulator=accumulator,
+            accumulator=already_consolidated,
             next_element=to_consolidate
         )
         total_samples = \
-            accumulator.analyzed_samples + to_consolidate.analyzed_samples
+            already_consolidated.analyzed_samples + to_consolidate.analyzed_samples
         return AnalysisResult(
-            name=accumulator.name,
+            name=already_consolidated.name,
             value=new_value,
             analyzed_samples=total_samples
         )
@@ -214,8 +217,8 @@ class ReceptiveFieldAnalyzer(GroundTruthAnalyzer):
         classes_encountered = set()
         for i in range(receptive_field.shape[0]):
             for j in range(receptive_field.shape[1]):
-                current_colour = receptive_field[i, j]
-                current_class = self.__mapping.get(current_colour, -1)
+                current_color = tuple(receptive_field[i, j])
+                current_class = self.__mapping.get(current_color, -1)
                 classes_encountered.add(current_class)
         return len(classes_encountered)
 
@@ -225,12 +228,15 @@ class AverageConsolidator(GroundTruthAnalysisConsolidator):
     def consolidate(self,
                     already_consolidated: AnalysisResult,
                     to_consolidate: AnalysisResult) -> AnalysisResult:
+        print('CYCKI:')
+        print(already_consolidated)
+        print(to_consolidate)
         acc_weight = already_consolidated.analyzed_samples
         sample_weight = to_consolidate.analyzed_samples
         new_value = calculate_weighted_sum(
             [
-                (acc_weight * already_consolidated.value),
-                (sample_weight * to_consolidate.value)
+                (acc_weight, already_consolidated.value),
+                (sample_weight, to_consolidate.value)
             ]
         )
         total_samples = acc_weight + sample_weight

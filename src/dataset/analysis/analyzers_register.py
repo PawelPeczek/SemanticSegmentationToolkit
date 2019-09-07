@@ -4,7 +4,6 @@ from src.dataset.analysis.analyzers import ClassOccupationAnalyzer, \
 
 ANALYZERS = {
     'class_occupation': ClassOccupationAnalyzer,
-    'class_average': ClassAverageConsolidator,
     'poly_line_complexity': PolyLineComplexityAnalyzer,
     'instances_analyzer': InstancesAnalyzer,
     'receptive_field': ReceptiveFieldAnalyzer
@@ -12,9 +11,8 @@ ANALYZERS = {
 }
 
 CONSOLIDATORS = {
-    'class_occupation': AverageConsolidator,
-    'class_average': AverageConsolidator,
-    'poly_line_complexity': AverageConsolidator,
-    'instances_analyzer': AverageConsolidator,
+    'class_occupation': ClassAverageConsolidator,
+    'poly_line_complexity': ClassAverageConsolidator,
+    'instances_analyzer': ClassAverageConsolidator,
     'receptive_field': AverageConsolidator
 }

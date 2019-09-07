@@ -32,13 +32,14 @@ def read_yaml_file(file_path: str) -> Dict:
         return yaml.load(config_file)
 
 
-def read_text_file_lines(file_path: str) -> List[str]:
-    file_content = []
+def read_text_file_lines(file_path: str,
+                         ignore_empty_lines: bool = True) -> List[str]:
     with open(file_path, 'r') as f:
-        line = f.readline()
-        line = line.strip()
-        file_content.append(line)
-    return file_content
+        lines = f.readlines()
+        lines = map(lambda l: l.strip(), lines)
+        if ignore_empty_lines:
+            lines = filter(lambda l: len(l) > 0, lines)
+    return list(lines)
 
 
 def dump_text_file(file_path: str, content: str) -> None:

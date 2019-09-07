@@ -1,11 +1,11 @@
-images_path: 'path_to_images_list.transoformation_options'
+images_path: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis/small_gt_val_list.txt'
 target_size: [2048, 1024]
+workers: 24
 mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
 results_dir: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis'
 analysis_config:
   to_be_used: [
     'class_occupation',
-    'class_average',
     'poly_line_complexity',
     'instances_analyzer',
     'receptive_field'
