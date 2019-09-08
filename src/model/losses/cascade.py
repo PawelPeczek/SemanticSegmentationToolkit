@@ -111,9 +111,10 @@ def _compute_branch_reconstruction_loss(output_node: tf.Tensor,
         resized_y = _resize_image(gt=resized_y, target_size=target_size)
     mse_loss = tf.losses.mean_squared_error(
         predictions=output_node,
-        labels=resized_y)
-    # variational_loss = _compute_variational_loss(output_node)
-    return mse_loss #+ variational_loss
+        labels=resized_y
+    )
+    variational_loss = _compute_variational_loss(output_node)
+    return mse_loss + variational_loss
 
 
 def _compute_variational_loss(x: tf.Tensor) -> tf.Operation:

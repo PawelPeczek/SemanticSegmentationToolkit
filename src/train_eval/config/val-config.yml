@@ -9,8 +9,8 @@ destination_size: [2048, 1024]
 model_name: 'ICNetAutoEncoder'
 num_classes: 20
 ignore_labels: [0]
-model_dir: '/archive/model_storage/big_images_model/icnet_auto_encoder_harder_input_fixed_2019_08_04_17:31'
-checkpoint_name: 'checkpoint.ckpt-39'
+model_dir: '/archive/model_storage/big_images_model/full_auto_encoding_big_holes_2019_09_08_16:20'
+checkpoint_name: 'checkpoint.ckpt-13'
 batch_size: 8
 dummy_iterator_tfrecords_files: 'all'
 gpu_to_use: 0

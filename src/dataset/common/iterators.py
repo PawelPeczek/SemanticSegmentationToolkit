@@ -214,11 +214,11 @@ class CityScapesIterator(ABC):
         mask = np.ones(mask_shape, dtype=np.uint8)
         img_height, img_width, _ = mask_shape
         half_height, half_width = int(round(img_height / 2)), int(round(img_width / 2))
-        max_box_height = int(round(0.15 * img_height))
-        max_box_width = int(round(0.15 * img_width))
-        min_box_height = int(round(0.4 * max_box_height))
-        min_box_width = int(round(0.4 * max_box_width))
-        black_boxes = random.randint(10, 20)
+        max_box_height = int(round(0.4 * img_height))
+        max_box_width = int(round(0.4 * img_width))
+        min_box_height = int(round(0.7 * max_box_height))
+        min_box_width = int(round(0.7 * max_box_width))
+        black_boxes = random.randint(1, 3)
         for _ in range(black_boxes):
             box_height = random.randint(min_box_height, max_box_height)
             box_width = random.randint(min_box_width, max_box_width)

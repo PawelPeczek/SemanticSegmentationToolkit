@@ -5,8 +5,7 @@ import cv2 as cv
 
 from src.common.config_utils import GraphExecutorConfigReader
 from src.dataset.common.iterators import IteratorType
-from src.dataset.utils.mapping_utils import get_id_to_color_mapping, map_colour, \
-    Id2ColorMapping
+from src.dataset.utils.mapping_utils import get_id_to_color_mapping, map_colour
 from src.train_eval.core.graph_executors.graph_executor import GraphExecutor
 from src.train_eval.core.persistence.managers import PersistenceManager, \
     EvaluationPersistenceManager

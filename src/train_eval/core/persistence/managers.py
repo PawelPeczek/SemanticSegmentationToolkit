@@ -15,16 +15,20 @@ class PersistenceManager(ABC):
 
     ERROR_LOG_FILE_NAME = 'loss.csv'
 
-    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+    def __init__(self,
+                 descriptive_name: str,
+                 config: GraphExecutorConfigReader):
         self._descriptive_name = descriptive_name
         self._config = config
         self._model_directory_path = self._generate_model_dir_path()
         self._loss_log_file_path = self.__generate_loss_log_file_name()
         self._save_path = self.__generate_checkpoint_path()
         self._profiling_path = self.__generate_model_profiling_dir_path()
-        self._model_inference_results_path = self.__generate_model_inference_results_dir_path()
+        self._model_inference_results_path = \
+            self.__generate_model_inference_results_dir_path()
         self._graph_summary_path = self.__generate_graph_summary_path()
-        self._dataset_transformation_test_path = self.__generate_dataset_transformation_test_path()
+        self._dataset_transformation_test_path =\
+            self.__generate_dataset_transformation_test_path()
         self._prepare_storage()
 
     def log_loss(self,
@@ -63,7 +67,10 @@ class PersistenceManager(ABC):
 
     def save_profiling_trace(self, trace: str) -> None:
         timestamp = self._get_current_timestamp()
-        trace_file_path = os.path.join(self._profiling_path, 'profiling_trace_{}.json'.format(timestamp))
+        trace_file_path = os.path.join(
+            self._profiling_path,
+            'profiling_trace_{}.json'.format(timestamp)
+        )
         with open(trace_file_path, 'w') as file:
             file.write(trace)
 
@@ -88,10 +95,16 @@ class PersistenceManager(ABC):
         return datetime.now().strftime("%Y_%m_%d_%H:%M")
 
     def __generate_loss_log_file_name(self) -> str:
-        return os.path.join(self._model_directory_path, self.ERROR_LOG_FILE_NAME)
+        return os.path.join(
+            self._model_directory_path,
+            self.ERROR_LOG_FILE_NAME
+        )
 
     def __generate_checkpoint_path(self) -> str:
-        return os.path.join(self._model_directory_path, '{}.ckpt'.format(self._config.checkpoint_name))
+        return os.path.join(
+            self._model_directory_path,
+            '{}.ckpt'.format(self._config.checkpoint_name)
+        )
 
     def __generate_model_profiling_dir_path(self) -> str:
         return os.path.join(self._model_directory_path, 'profiler_output')
@@ -103,28 +116,41 @@ class PersistenceManager(ABC):
         return os.path.join(self._model_directory_path, 'graph_summary')
 
     def __generate_dataset_transformation_test_path(self) -> str:
-        return os.path.join(self._model_directory_path, 'dataset_transformation_test')
+        return os.path.join(
+            self._model_directory_path,
+            'dataset_transformation_test'
+        )
 
 
 class TrainingPersistenceManager(PersistenceManager):
 
-    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+    def __init__(self,
+                 descriptive_name: str,
+                 config: GraphExecutorConfigReader):
         super().__init__(descriptive_name, config)
 
     def _generate_model_dir_path(self) -> str:
         timestamp = self._get_current_timestamp()
         training_dir_name = '{}_{}'.format(self._descriptive_name, timestamp)
-        return os.path.join(self._config.model_storage_directory, training_dir_name)
+        return os.path.join(
+            self._config.model_storage_directory,
+            training_dir_name
+        )
 
     def _prepare_storage(self) -> None:
         super()._prepare_storage()
-        config_copy_path = os.path.join(self._model_directory_path, 'train-config.yml')
+        config_copy_path = os.path.join(
+            self._model_directory_path,
+            'train-config.yml'
+        )
         copyfile(self._config.get_config_path(), config_copy_path)
 
 
 class EvaluationPersistenceManager(PersistenceManager):
 
-    def __init__(self, descriptive_name: str, config: GraphExecutorConfigReader):
+    def __init__(self,
+                 descriptive_name: str,
+                 config: GraphExecutorConfigReader):
         super().__init__(descriptive_name, config)
 
     def _generate_model_dir_path(self) -> str:

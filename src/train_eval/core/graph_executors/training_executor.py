@@ -188,7 +188,9 @@ class TrainingExecutor(GraphExecutor):
             return errors
 
     def __dump_stats(self, epoch: int, loss: float) -> None:
-        sys.stdout.write("\rMid-Epoch #{}\tlast batch loss value: {}\t\t".format(epoch, loss))
+        sys.stdout.write(
+            f"\rMid-Epoch #{epoch}\tlast batch loss value: {loss}\t\t"
+        )
         sys.stdout.flush()
 
     def __saving_frequency_should_be_increased(self, error_val: float) -> bool:

@@ -122,7 +122,8 @@ class ICNetBackbone(Network, ABC):
     def infer(self, x: tf.Tensor) -> NetworkOutput:
         return self.feed_forward(
             x=x,
-            is_training=False)
+            is_training=False
+        )
 
     def __big_images_branch(self,
                             x: tf.Tensor,

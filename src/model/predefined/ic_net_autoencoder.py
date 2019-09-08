@@ -23,9 +23,7 @@ class ICNetAutoEncoder(ICNetBackbone):
 
     def training_pass(self, x: tf.Tensor, y: tf.Tensor) -> tf.Operation:
         if self._image_mean is not None:
-            x -= self._image_mean
             y -= self._image_mean
-        x = tf.math.divide(x, 255.0)
         y = tf.math.divide(y, 255.0)
         nodes_to_return = ['conv_sub4', 'conv_sub2', 'conv6_cls']
         model_output = self.feed_forward(

@@ -3,7 +3,7 @@ destination_size: [2048, 1024]
 model_name: 'ICNetAutoEncoder'
 num_classes: 20
 model_dir: '/archive/model_storage/big_images_model/icnet_auto_encoder_harder_input_2019_08_04_15:51'
-checkpoint_name: 'checkpoint.ckpt-3'
+checkpoint_name: 'checkpoint.ckpt-1'
 gpu_to_use: 0
 input_video: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/big_stuttgart_01.avi'
 persist_video: True
