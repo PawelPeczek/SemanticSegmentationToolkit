@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import tensorflow as tf
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.iterators import CityScapesIteratorFactory, IteratorType
+from src.dataset.training_features.iterators import IteratorAssembler, IteratorType
 from src.model.network import Network
 from src.model.utils import ModelFactory
 from src.train_eval.core.optimizers.wrappers import OptimizerWrapperFactory
@@ -17,7 +17,7 @@ class GraphExecutor(ABC):
         self._config = config
         self._descriptive_name = descriptive_name
         self._model = self.__construct_model()
-        self._iterator_factory = CityScapesIteratorFactory(config)
+        self._iterator_factory = IteratorAssembler(config)
         self._persistence_manager = self._get_persistence_manager()
 
     @abstractmethod

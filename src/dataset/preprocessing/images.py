@@ -233,11 +233,11 @@ class _TFRecordsConverter:
         return  batch_splitter.split_into_batches(samples)
 
     def __prepare_storage(self) -> None:
-        targer_dir_path = os.path.join(
+        target_dir_path = os.path.join(
             self.__config.output_tfrecords_dir,
             self.__dataset_part.value
         )
-        create_directory(targer_dir_path)
+        create_directory(target_dir_path)
 
     def __prepare_workers(self,
                           batches: List[List[Sample]],

@@ -1,14 +1,14 @@
 from src.common.config_utils import GraphExecutorConfigReader
 from enum import Enum
 
-from src.dataset.common.iterators import IteratorType
+from src.dataset.training_features.iterators import IteratorType
 from src.train_eval.core.graph_executors.dataset_transformation_test_executor import DatasetTransformationTestExecutor
 from src.train_eval.core.graph_executors.evaluation_executor import EvaluationExecutor
 from src.train_eval.core.graph_executors.graph_executor import GraphExecutor
 from src.train_eval.core.graph_executors.inference_executor import InferenceExecutor
 from src.train_eval.core.graph_executors.inference_speed_test_executor import InferenceSpeedTestExecutor
 from src.train_eval.core.graph_executors.training_executor import TrainingExecutor
-from src.train_eval.core.graph_executors.visualisation_executor import VisualisationExecutor
+from src.train_eval.core.graph_executors.tensor_board_executor import TensorBoardExecutor
 
 
 class GraphExecutorFactoryError(Exception):
@@ -31,7 +31,7 @@ class GraphExecutorType(Enum):
             'iterator_type': IteratorType.DUMMY_ITERATOR
         }
     )
-    GRAPH_VISUALISATION = (VisualisationExecutor, {})
+    GRAPH_VISUALISATION = (TensorBoardExecutor, {})
     TEST_DATA_TRANSFORMATION = (DatasetTransformationTestExecutor, {})
 
 

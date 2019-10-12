@@ -2,7 +2,7 @@ from typing import Optional, Tuple
 
 import tensorflow as tf
 
-from src.dataset.common.transformations.DatasetTransformation import DatasetTransformation
+from src.dataset.training_features.transformations.DatasetTransformation import DatasetTransformation
 
 
 class AdjustContrast(DatasetTransformation):

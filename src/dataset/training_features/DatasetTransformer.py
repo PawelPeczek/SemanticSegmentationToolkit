@@ -3,9 +3,9 @@ from typing import Tuple, List
 import tensorflow as tf
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.transformations.DatasetTransformation import DatasetTransformation
-from src.dataset.common.transformations.DatasetTransformationFactory import DatasetTransformationFactory
-from src.dataset.common.transformations.TransformationType import TransformationType
+from src.dataset.training_features.transformations.DatasetTransformation import DatasetTransformation
+from src.dataset.training_features.transformations.DatasetTransformationFactory import DatasetTransformationFactory
+from src.dataset.training_features.transformations.TransformationType import TransformationType
 
 from logging import getLogger
 

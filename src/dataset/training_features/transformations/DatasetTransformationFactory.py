@@ -1,11 +1,11 @@
-from src.dataset.common.transformations.AdjustBrightness import AdjustBrightness
-from src.dataset.common.transformations.AdjustContrast import AdjustContrast
-from src.dataset.common.transformations.CropAndScale import CropAndScale
-from src.dataset.common.transformations.DatasetTransformation import DatasetTransformation
-from src.dataset.common.transformations.GaussianNoiseAdder import GaussianNoiseAdder
-from src.dataset.common.transformations.HorizontalFlip import HorizontalFlip
-from src.dataset.common.transformations.Rotation import Rotation
-from src.dataset.common.transformations.TransformationType import TransformationType
+from src.dataset.training_features.transformations.AdjustBrightness import AdjustBrightness
+from src.dataset.training_features.transformations.AdjustContrast import AdjustContrast
+from src.dataset.training_features.transformations.CropAndScale import CropAndScale
+from src.dataset.training_features.transformations.DatasetTransformation import DatasetTransformation
+from src.dataset.training_features.transformations.GaussianNoiseAdder import GaussianNoiseAdder
+from src.dataset.training_features.transformations.HorizontalFlip import HorizontalFlip
+from src.dataset.training_features.transformations.Rotation import Rotation
+from src.dataset.training_features.transformations.TransformationType import TransformationType
 
 
 class DatasetTransformationFactory:

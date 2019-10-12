@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import tensorflow as tf
 
-from src.dataset.common.transformations.TransformationType import \
+from src.dataset.training_features.transformations.TransformationType import \
     TransformationType
 
 
