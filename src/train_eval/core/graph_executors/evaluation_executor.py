@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.iterators import IteratorType
+from src.dataset.training_features.iterators import IteratorType
 from src.train_eval.core.graph_executors.graph_executor import GraphExecutor
 from src.train_eval.core.graph_executors.utils import evaluate_miou, \
     get_validation_operation, ValidationOperation

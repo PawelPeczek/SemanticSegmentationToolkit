@@ -82,12 +82,11 @@ class ClassOccupationAnalyzer(GroundTruthAnalyzer):
 
 class ClassAverageConsolidator(GroundTruthAnalysisConsolidator):
 
+     # TODO - test implementation
+
     def consolidate(self,
                     already_consolidated: AnalysisResult,
                     to_consolidate: AnalysisResult) -> AnalysisResult:
-        print('DUPA:')
-        print(already_consolidated)
-        print(to_consolidate)
         new_value = self.__connect_values(
             accumulator=already_consolidated,
             next_element=to_consolidate

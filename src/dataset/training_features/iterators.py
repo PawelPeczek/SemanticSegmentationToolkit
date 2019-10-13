@@ -11,7 +11,7 @@ from glob import glob
 import random
 
 from src.common.config_utils import GraphExecutorConfigReader
-from src.dataset.common.DatasetTransformer import DatasetTransformer
+from src.dataset.training_features.DatasetTransformer import DatasetTransformer
 
 SimpleSegmentationExample = Tuple[tf.Tensor, tf.Tensor]
 IndexedSegmentationExample = Tuple[tf.Tensor, tf.Tensor, tf.Tensor]
@@ -19,7 +19,7 @@ SegmentationExample = \
     Union[SimpleSegmentationExample, IndexedSegmentationExample]
 
 
-class CityScapesIterator(ABC):
+class IteratorBuilder(ABC):
 
     def __init__(self, config: GraphExecutorConfigReader):
         self._config = config
@@ -228,7 +228,7 @@ class CityScapesIterator(ABC):
         return mask
 
 
-class InitializableDummyIterator(CityScapesIterator):
+class InitializableDummyIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         dataset = self._get_dummy_segmentation_iterator(
@@ -244,7 +244,7 @@ class InitializableDummyIterator(CityScapesIterator):
         return dataset.make_initializable_iterator()
 
 
-class OneShotDummyIterator(CityScapesIterator):
+class OneShotDummyIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         dataset = self._get_dummy_segmentation_iterator(
@@ -260,7 +260,7 @@ class OneShotDummyIterator(CityScapesIterator):
         return dataset.make_one_shot_iterator()
 
 
-class OneShotValidationIterator(CityScapesIterator):
+class OneShotValidationIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         tfrecords_filenames = self._get_tfrecords_list('val')
@@ -276,7 +276,7 @@ class OneShotValidationIterator(CityScapesIterator):
         return dataset.make_one_shot_iterator()
 
 
-class OneShotTrainIterator(CityScapesIterator):
+class OneShotTrainIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         tfrecords_filenames = self._get_tfrecords_list('train')
@@ -291,7 +291,7 @@ class OneShotTrainIterator(CityScapesIterator):
         return dataset.make_one_shot_iterator()
 
 
-class InitializableValidationIterator(CityScapesIterator):
+class InitializableValidationIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         tfrecords_filenames = self._get_tfrecords_list('val')
@@ -307,7 +307,7 @@ class InitializableValidationIterator(CityScapesIterator):
         return dataset.make_initializable_iterator()
 
 
-class InitializableTrainIterator(CityScapesIterator):
+class InitializableTrainIteratorBuilder(IteratorBuilder):
 
     def build_segmentation_iterator(self) -> tf.data.Iterator:
         tfrecords_filenames = self._get_tfrecords_list('train')
@@ -323,14 +323,14 @@ class InitializableTrainIterator(CityScapesIterator):
 
 
 class IteratorType(Enum):
-    INITIALIZABLE_TRAIN_SET_ITERATOR = InitializableTrainIterator
-    OS_VALIDATION_ITERATOR = OneShotValidationIterator
-    OS_TRAIN_ITERATOR = OneShotTrainIterator
-    INITIALIZABLE_VALIDATION_ITERATOR = InitializableValidationIterator
+    INITIALIZABLE_TRAIN_SET_ITERATOR = InitializableTrainIteratorBuilder
+    OS_VALIDATION_ITERATOR = OneShotValidationIteratorBuilder
+    OS_TRAIN_ITERATOR = OneShotTrainIteratorBuilder
+    INITIALIZABLE_VALIDATION_ITERATOR = InitializableValidationIteratorBuilder
     DUMMY_ITERATOR = None
 
 
-class CityScapesIteratorFactory:
+class IteratorAssembler:
 
     def __init__(self, config: GraphExecutorConfigReader):
         self.__config = config
@@ -347,8 +347,8 @@ class CityScapesIteratorFactory:
             factorized_iterator = factorized_iterator(self.__config)
         return factorized_iterator.build()
 
-    def __prepare_dummy_iterator(self) -> CityScapesIterator:
+    def __prepare_dummy_iterator(self) -> IteratorBuilder:
         if self.__config.mode == 'train':
-            return InitializableDummyIterator(self.__config)
+            return InitializableDummyIteratorBuilder(self.__config)
         else:
-            return OneShotDummyIterator(self.__config)
+            return OneShotDummyIteratorBuilder(self.__config)
