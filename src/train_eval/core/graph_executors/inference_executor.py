@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Optional
 
 import tensorflow as tf
@@ -116,19 +117,31 @@ class InferenceExecutor(GraphExecutor):
             y_dash = map_colour(y_dash, mappings)[..., ::-1]
             y = gt[i]
             y = map_colour(y, mappings)[..., ::-1]
+            diff_map = self.__prepare_difference_map(
+                first_image=y_dash,
+                second_image=y
+            )
             self.__persist_single_semantic_inference_result(
                 idx=idx,
                 x=x,
                 y_dash=y_dash,
-                gt=y
+                gt=y,
+                diff_map=diff_map
             )
 
     def __persist_single_semantic_inference_result(self,
                                                    idx: int,
                                                    x: np.ndarray,
                                                    y_dash: np.ndarray,
-                                                   gt: np.ndarray) -> None:
-        full_results = np.concatenate([x, y_dash, gt], axis=-2)
+                                                   gt: np.ndarray,
+                                                   diff_map: np.ndarray
+                                                   ) -> None:
+        full_results = self.__stack_inference_results(
+            x=x,
+            y_dash=y_dash,
+            gt=gt,
+            diff_map=diff_map
+        )
         full_results_name = f'{idx}_full_results'
         full_results_path = \
             self._persistence_manager.generate_inference_image_path(
@@ -150,17 +163,51 @@ class InferenceExecutor(GraphExecutor):
             single_x = input_image[i][..., ::-1]
             single_inference = inferred_image[i][..., ::-1]
             single_gt = gt[i][..., ::-1]
+            diff_map = self.__prepare_difference_map(
+                first_image=single_inference,
+                second_image=single_gt
+            )
             self.__persist_single_auto_encoding_inference_result(
                 x=single_x,
                 y_dash=single_inference,
-                gt=single_gt)
+                gt=single_gt,
+                diff_map=diff_map
+            )
 
     def __persist_single_auto_encoding_inference_result(self,
                                                         x: np.ndarray,
                                                         y_dash: np.ndarray,
-                                                        gt: np.ndarray) -> None:
-        stacked_image = np.concatenate([x, y_dash, gt], axis=-2)
+                                                        gt: np.ndarray,
+                                                        diff_map: np.ndarray
+                                                        ) -> None:
+        stacked_image = self.__stack_inference_results(
+            x=x,
+            y_dash=y_dash,
+            gt=gt,
+            diff_map=diff_map
+        )
         path = self._persistence_manager.generate_inference_image_path()
         cv.imwrite(path, stacked_image)
 
+    def __prepare_difference_map(self,
+                                 first_image: np.ndarray,
+                                 second_image: np.ndarray
+                                 ) -> np.ndarray:
+        first_image = first_image.astype(np.uint8)
+        second_image = second_image.astype(np.uint8)
+        images = [first_image, second_image]
+        color_conversion = partial(cv.cvtColor, code=cv.COLOR_RGB2GRAY)
+        images = list(map(color_conversion, images))
+        diff_picture = np.absolute(images[0] - images[1])
+        return cv.cvtColor(diff_picture, cv.COLOR_GRAY2RGB)
 
+    def __stack_inference_results(self,
+                                  x: np.ndarray,
+                                  y_dash: np.ndarray,
+                                  gt: np.ndarray,
+                                  diff_map: np.ndarray
+                                  ) -> np.ndarray:
+        top_row = np.concatenate([x, y_dash], axis=-2)
+        bottom_row = np.concatenate([gt, diff_map], axis=-2)
+        stacked_image = np.concatenate([top_row, bottom_row], axis=0)
+        return stacked_image

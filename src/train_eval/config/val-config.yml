@@ -1,16 +1,17 @@
 mode: 'val'
-task: 'auto-encoding' # 'segmentation'
+task: 'segmentation' # 'segmentation'
 dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
-tfrecords_dir: 'tfrecords-full-size'
+tfrecords_dir: 'tfrecords-new-pipeline'
 validation_examples_list: '/home/ppeczek/Dokumenty/CityScapes/val_list.csv'
+validation_samples_mapping: '/home/ppeczek/Dokumenty/CityScapes/tfrecords-new-pipeline/val_samples_mapping.csv'
 mapping_file: 'mappings.yaml'
 tfrecords_base_name: 'city-scapes.tfrecords'
 destination_size: [2048, 1024]
-model_name: 'ICNetAutoEncoder'
+model_name: 'ICNet'
 num_classes: 20
 ignore_labels: [0]
-model_dir: '/archive/model_storage/big_images_model/auto_encoder_2019_09_10_04:29'
-checkpoint_name: 'checkpoint.ckpt-60'
+model_dir: '/archive/model_storage/big_images_model/segmentation_ae_pretraining_2019_09_09_20:13'
+checkpoint_name: 'checkpoint.ckpt-210'
 batch_size: 8
 dummy_iterator_tfrecords_files: 'all'
 gpu_to_use: 0

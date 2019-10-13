@@ -1,9 +1,9 @@
 mapping_file: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
 destination_size: [2048, 1024]
-model_name: 'ICNetAutoEncoder'
+model_name: 'ICNet'
 num_classes: 20
-model_dir: '/archive/model_storage/big_images_model/icnet_auto_encoder_harder_input_2019_08_04_15:51'
-checkpoint_name: 'checkpoint.ckpt-1'
+model_dir: '/archive/model_storage/big_images_model/segmentation_ae_pretraining_2019_09_09_20:13'
+checkpoint_name: 'checkpoint.ckpt-210'
 gpu_to_use: 0
 input_video: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/big_stuttgart_01.avi'
 persist_video: True
