@@ -42,7 +42,7 @@ class PostInferenceEvaluator:
         mapping_path = self.__config.validation_samples_mapping
         mapping_file_raw = read_csv_file(mapping_path)
         id2gt = {}
-        for idx, file_path in mapping_file_raw:
+        for idx, _, file_path in mapping_file_raw:
             id2gt[idx] = file_path
         return id2gt
 
@@ -50,7 +50,7 @@ class PostInferenceEvaluator:
                                      id2gt: Dict[str, str]
                                      ) -> List[Tuple[np.ndarray, np.ndarray]]:
         result = []
-        for idx, _, gt_path in id2gt.items():
+        for idx, gt_path in id2gt.items():
             inference_path = self.__prepare_inference_sample_path(idx)
             inference_image = cv.imread(inference_path)
             if inference_image is None:
@@ -117,7 +117,7 @@ class PostInferenceEvaluator:
                              ) -> Dict[int, EvaluationAccumulatorEntry]:
         if color_id in accumulator:
             accumulator[color_id].intersection += intersection_area
-            accumulator[color_id].union = union_area
+            accumulator[color_id].union += union_area
         else:
             accumulator_entry = EvaluationAccumulatorEntry(
                 intersection=intersection_area,
