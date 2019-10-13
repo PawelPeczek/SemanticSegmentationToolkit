@@ -57,9 +57,12 @@ class PersistenceManager(ABC):
         print('Checkpoint saving [DONE]')
         print('===========================================================')
 
-    def generate_inference_image_path(self) -> str:
-        rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
-        return os.path.join(self._config.model_dir, rand_name)
+    def generate_inference_image_path(self, name: Optional[str] = None) -> str:
+        if name is None:
+            name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())
+        else:
+            name = f'{name}.png'
+        return os.path.join(self._model_inference_results_path, name)
 
     def generate_transformation_image_path(self) -> str:
         rand_name = '{}-{}.png'.format(self._descriptive_name, uuid.uuid4())

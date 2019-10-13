@@ -97,7 +97,7 @@ class GraphExecutorConfigReader(ConfigReader):
             base_dir_key='dataset_dir')
         self._adjust_config_path(
             config_path_key='mapping_file',
-            base_dir_key='mapping_file')
+            base_dir_key='dataset_dir')
         self._adjust_destination_size()
         if self.__reader_type == 'val':
             self._adjust_config_path(

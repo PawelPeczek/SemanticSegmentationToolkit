@@ -1,3 +1,5 @@
+from typing import Optional
+
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,13 +22,18 @@ class InferenceExecutor(GraphExecutor):
 
     def execute(self) -> None:
         iterator = self._get_iterator()
-        x, y = iterator.get_next()
+        iterator_element = iterator.get_next()
+        idx = None
+        if len(iterator_element) == 3:
+            idx, x, y = iterator_element
+        else:
+            x, y = iterator_element
         variable_scope = tf.get_variable_scope()
         with tf.variable_scope(variable_scope, reuse=tf.AUTO_REUSE):
             prediction = self._model.infer(x)
         x_casted = tf.cast(x, tf.uint8)
         with tf.device("/gpu:{}".format(self._config.gpu_to_use)):
-            self.__proceed_inference(x_casted, prediction, y)
+            self.__proceed_inference(x_casted, prediction, y, idx)
 
     def _get_iterator_type(self) -> IteratorType:
         return IteratorType.OS_VALIDATION_ITERATOR
@@ -39,7 +46,8 @@ class InferenceExecutor(GraphExecutor):
     def __proceed_inference(self,
                             x_casted: tf.Tensor,
                             prediction: tf.Tensor,
-                            y: tf.Tensor) -> None:
+                            y: tf.Tensor,
+                            idx: Optional[tf.Tensor]) -> None:
         saver = tf.train.Saver()
         session_config = self._get_session_config()
         with tf.Session(config=session_config) as session:
@@ -49,7 +57,8 @@ class InferenceExecutor(GraphExecutor):
                     session=session,
                     x_casted=x_casted,
                     prediction=prediction,
-                    y=y)
+                    y=y,
+                    idx=idx)
             except tf.errors.OutOfRangeError:
                 print('Inference [DONE]')
 
@@ -57,53 +66,81 @@ class InferenceExecutor(GraphExecutor):
                                  session: tf.Session,
                                  x_casted: tf.Tensor,
                                  prediction: tf.Tensor,
-                                 y: tf.Tensor) -> None:
+                                 y: tf.Tensor,
+                                 idx: Optional[tf.Tensor]) -> None:
         while True:
             self.__proceed_inference_on_batch(
                 session=session,
                 x_casted=x_casted,
                 prediction=prediction,
-                y=y)
+                y=y,
+                idx=idx)
 
     def __proceed_inference_on_batch(self,
                                      session: tf.Session,
                                      x_casted: tf.Tensor,
                                      prediction: tf.Tensor,
-                                     y: tf.Tensor) -> None:
-        input_image, inferred_image, gt = session.run([x_casted, prediction, y])
+                                     y: tf.Tensor,
+                                     idx: Optional[tf.Tensor]) -> None:
+
         task = self._config.get_or_else('task', 'segmentation')
         if task.lower() == 'segmentation':
+            images_idx, input_image, inferred_image, gt = session.run(
+                [idx, x_casted, prediction, y]
+            )
             self.__proceed_segmentation_inference(
+                images_idx=images_idx,
                 input_image=input_image,
                 inferred_image=inferred_image,
-                gt=gt)
+                gt=gt
+            )
         else:
+            input_image, inferred_image, gt = session.run(
+                [x_casted, prediction, y]
+            )
             self.__proceed_auto_encoding_inference(
                 input_image=input_image,
                 inferred_image=inferred_image,
                 gt=gt)
 
     def __proceed_segmentation_inference(self,
+                                         images_idx: np.ndarray,
                                          input_image: np.ndarray,
                                          inferred_image: np.ndarray,
                                          gt: np.ndarray) -> None:
         mappings = get_id_to_color_mapping(self._config.mapping_file)
-        fig = plt.figure(figsize=(20, 40))
         for i in range(0, input_image.shape[0]):
-            to_show = input_image[i]
-            fig.add_subplot(input_image.shape[0], 3, 3 * i + 1)
-            plt.imshow(to_show)
-            fig.add_subplot(input_image.shape[0], 3, 3 * i + 2)
-            result = inferred_image[i]
-            result = map_colour(result, mappings)
-            plt.imshow(result)
-            fig.add_subplot(input_image.shape[0], 3, 3 * i + 3)
-            ground_truth = gt[i]
-            ground_truth = map_colour(ground_truth, mappings)
-            plt.imshow(ground_truth)
-        image_path = self._persistence_manager.generate_inference_image_path()
-        plt.savefig(image_path)
-        plt.close()
+            idx = images_idx[i]
+            x = input_image[i][..., ::-1]
+            y_dash = inferred_image[i]
+            y_dash = map_colour(y_dash, mappings)[..., ::-1]
+            y = gt[i]
+            y = map_colour(y, mappings)[..., ::-1]
+            self.__persist_single_semantic_inference_result(
+                idx=idx,
+                x=x,
+                y_dash=y_dash,
+                gt=y
+            )
+
+    def __persist_single_semantic_inference_result(self,
+                                                   idx: int,
+                                                   x: np.ndarray,
+                                                   y_dash: np.ndarray,
+                                                   gt: np.ndarray) -> None:
+        full_results = np.concatenate([x, y_dash, gt], axis=-2)
+        full_results_name = f'{idx}_full_results'
+        full_results_path = \
+            self._persistence_manager.generate_inference_image_path(
+                name=full_results_name
+            )
+        cv.imwrite(full_results_path, full_results)
+        inference_only_name = f'{idx}_inference_only'
+        inference_only_path = \
+            self._persistence_manager.generate_inference_image_path(
+                name=inference_only_name
+            )
+        cv.imwrite(inference_only_path, y_dash)
 
     def __proceed_auto_encoding_inference(self,
                                           input_image: np.ndarray,
@@ -123,7 +160,7 @@ class InferenceExecutor(GraphExecutor):
                                                         y_dash: np.ndarray,
                                                         gt: np.ndarray) -> None:
         stacked_image = np.concatenate([x, y_dash, gt], axis=-2)
-        print(stacked_image.shape)
         path = self._persistence_manager.generate_inference_image_path()
-        print(path)
         cv.imwrite(path, stacked_image)
+
+

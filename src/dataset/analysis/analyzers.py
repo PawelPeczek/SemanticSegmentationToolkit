@@ -228,9 +228,6 @@ class AverageConsolidator(GroundTruthAnalysisConsolidator):
     def consolidate(self,
                     already_consolidated: AnalysisResult,
                     to_consolidate: AnalysisResult) -> AnalysisResult:
-        print('CYCKI:')
-        print(already_consolidated)
-        print(to_consolidate)
         acc_weight = already_consolidated.analyzed_samples
         sample_weight = to_consolidate.analyzed_samples
         new_value = calculate_weighted_sum(

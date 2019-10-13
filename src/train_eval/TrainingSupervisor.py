@@ -41,15 +41,15 @@ class TrainingSupervisor(ExecutionSupervisor):
                                     descriptive_name: str,
                                     config_path: Optional[str] = None
                                     ) -> None:
-        try:
-            config = GraphExecutorConfigReader(config_path)
-            self._execute_graph_operation_pipeline(
-                executor_type=GraphExecutorType.TEST_DATA_TRANSFORMATION,
-                descriptive_name=descriptive_name,
-                config=config
-            )
-        except Exception as ex:
-            print(f'Failed to proceed data augmentation visualisation. {ex}')
+        # try:
+        config = GraphExecutorConfigReader(config_path)
+        self._execute_graph_operation_pipeline(
+            executor_type=GraphExecutorType.TEST_DATA_TRANSFORMATION,
+            descriptive_name=descriptive_name,
+            config=config
+        )
+        # except Exception as ex:
+        #     print(f'Failed to proceed data augmentation visualisation. {ex}')
 
 
 if __name__ == '__main__':

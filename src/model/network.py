@@ -1,6 +1,6 @@
 import logging
 from abc import abstractmethod
-from typing import Optional, Union, Dict, List
+from typing import Optional, Union, Dict, List, Set
 
 import tensorflow as tf
 
@@ -88,6 +88,24 @@ class Network:
         """
         raise NotImplementedError('This method must be implemented in '
                                   'derived class.')
+
+    def restore_checkpoint(self,
+                           checkpoint_path: str,
+                           session: tf.Session) -> None:
+        var_to_restore = self._get_variables_to_restore()
+        saver = tf.train.Saver(var_list=var_to_restore)
+        saver.restore(sess=session, save_path=checkpoint_path)
+
+    def _get_variables_to_restore(self) -> List[tf.Variable]:
+        not_to_restore = self._get_variables_name_not_to_restore()
+        var_to_restore = [
+            v for v in tf.global_variables()
+            if v.name.split('/')[0] not in not_to_restore
+        ]
+        return var_to_restore
+
+    def _get_variables_name_not_to_restore(self) -> Set[str]:
+        return set()
 
     def _register_output(self,
                          node: tf.Tensor,

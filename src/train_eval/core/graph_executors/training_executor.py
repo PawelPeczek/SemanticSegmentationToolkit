@@ -88,6 +88,15 @@ class TrainingExecutor(GraphExecutor):
                                session_operations: SessionOperations) -> None:
         sess_config = self._get_session_config()
         with tf.Session(config=sess_config) as sess:
+            checkpoint_path = self._config.get_or_else(
+                option_name='checkpoint_to_restore',
+                else_value=None
+            )
+            if checkpoint_path is not None:
+                self._model.restore_checkpoint(
+                    checkpoint_path=checkpoint_path,
+                    session=sess
+                )
             self.__train(sess, session_operations)
 
     def __distribute_training(self,
