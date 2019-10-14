@@ -20,12 +20,12 @@ class EvaluationSupervisor(ExecutionSupervisor):
 
     def evaluate_inference(self,
                            config_path: Optional[str] = None) -> None:
-        # try:
-        config = GraphExecutorConfigReader(config_path, reader_type='val')
-        evaluator = PostInferenceEvaluator(config=config)
-        evaluator.evaluate()
-        # except Exception as ex:
-        #     print('Failed to proceed model evaluation. {}'.format(ex))
+        try:
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
+            evaluator = PostInferenceEvaluator(config=config)
+            evaluator.evaluate()
+        except Exception as ex:
+            print('Failed to proceed model evaluation. {}'.format(ex))
 
     def get_predictions_from_model(self, descriptive_name: Union[str, None] = None, config_path: Union[str, None] = None) -> None:
         try:

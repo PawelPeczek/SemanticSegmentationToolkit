@@ -45,7 +45,8 @@ class TrainingExecutor(GraphExecutor):
             iterator = self._get_iterator()
             optimizer = self._initialize_optimizer()
             x, y = iterator.get_next()
-            loss = self._model.training_pass(x, y)
+            with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
+                loss = self._model.training_pass(x, y)
             gradient_update = minimize_loss(optimizer, loss)
         validation_operations = None
         if self._config.get_or_else('task', 'segmentation') == 'segmentation':
