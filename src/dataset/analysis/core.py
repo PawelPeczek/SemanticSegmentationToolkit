@@ -165,7 +165,7 @@ class _AnalysisProcessor:
                        analysis_couples: List[AnalysisCouple]
                        ) -> List[List[AnalysisResult]]:
         logging.info('Analysis in progress...')
-        images_for_workers = _ListSplitter.split_list(
+        images_for_workers = ListSplitter.split_list(
             to_split=images,
             chunks_number=self.__mapping_workers_number
         )
@@ -240,7 +240,7 @@ class _AnalysisProcessor:
         return results
 
 
-class _ListSplitter:
+class ListSplitter:
 
     @staticmethod
     def split_list(to_split: list, chunks_number: int) -> List[list]:
