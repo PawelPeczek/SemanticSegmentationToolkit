@@ -1,7 +1,8 @@
 from fire import Fire
 from typing import Union
-from src.dataset.core.DataPreProcessingConfigReader import DataPreProcessingConfigReader
-from src.dataset.core.DatasetPreprocessor import DatasetPreprocessor
+
+from src.common.config_utils import DataPreProcessingConfigReader
+from src.dataset.preprocessing.images import DatasetPreprocessor
 
 
 class TfrecordsGenerator:
@@ -12,7 +13,7 @@ class TfrecordsGenerator:
             dataset_preprocessor = DatasetPreprocessor(config)
             dataset_preprocessor.transform_dataset()
         except Exception as ex:
-            print('Failed to convert dataset. {}'.format(ex))
+            print('Failed to convert images. {}'.format(ex))
 
 
 if __name__ == '__main__':

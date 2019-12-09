@@ -1,9 +1,10 @@
 from fire import Fire
-from typing import Union
+from typing import Union, Optional
 
+from src.common.config_utils import GraphExecutorConfigReader
 from src.train_eval.ExecutionSupervisor import ExecutionSupervisor
-from src.train_eval.core.config_readers.GraphExecutorConfigReader import GraphExecutorConfigReader
-from src.train_eval.core.graph_executors.GraphExecutorFactory import GraphExecutorType
+from src.train_eval.core.evaluation_utils import PostInferenceEvaluator
+from src.train_eval.core.graph_executors.graph_executor_factory import GraphExecutorType
 
 
 class EvaluationSupervisor(ExecutionSupervisor):
@@ -14,6 +15,15 @@ class EvaluationSupervisor(ExecutionSupervisor):
             if descriptive_name is None:
                 descriptive_name = 'model_evaluation'
             self._execute_graph_operation_pipeline(GraphExecutorType.EVALUATION, descriptive_name, config)
+        except Exception as ex:
+            print('Failed to proceed model evaluation. {}'.format(ex))
+
+    def evaluate_inference(self,
+                           config_path: Optional[str] = None) -> None:
+        try:
+            config = GraphExecutorConfigReader(config_path, reader_type='val')
+            evaluator = PostInferenceEvaluator(config=config)
+            evaluator.evaluate()
         except Exception as ex:
             print('Failed to proceed model evaluation. {}'.format(ex))
 

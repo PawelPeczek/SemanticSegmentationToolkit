@@ -1,0 +1,11 @@
+mapping_file: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+destination_size: [2048, 1024]
+model_name: 'ICNet'
+num_classes: 20
+img_mean: [103.939, 116.779, 123.68]
+model_dir: '/archive/model_storage/big_images_model/plain_icnet_augmented_1_2019_10_21_22:06'
+checkpoint_name: 'checkpoint.ckpt-95'
+gpu_to_use: 0
+input_video: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/big_stuttgart_01.avi'
+persist_video: True
+output_video_file: '/home/ppeczek/Dokumenty/CityScapes/video/converted_video/infered_stuttgart_aug_icnetv4.avi'

@@ -1,0 +1,18 @@
+images_path: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis/gt_val_list.txt'
+target_size: [2048, 1024]
+workers: 24
+mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+results_dir: '/home/ppeczek/Dokumenty/CityScapes/dataset_analysis'
+analysis_config:
+  to_be_used: [
+    'class_occupation',
+    'poly_line_complexity',
+    'instances_analyzer',
+    'receptive_field'
+  ]
+  configurable:
+    receptive_field:
+      analyzer:
+        mapping_path: '/home/ppeczek/Dokumenty/CityScapes/mappings.yaml'
+        kernel_size: [5, 5]
+        stride: [2, 2]

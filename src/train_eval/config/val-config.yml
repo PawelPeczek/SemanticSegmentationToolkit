@@ -1,0 +1,20 @@
+mode: 'val'
+task: 'segmentation' # 'segmentation'
+dataset_dir: '/home/ppeczek/Dokumenty/CityScapes'
+tfrecords_dir: 'tfrecords-new-pipeline'
+validation_examples_list: '/home/ppeczek/Dokumenty/CityScapes/val_list.csv'
+validation_samples_mapping: '/home/ppeczek/Dokumenty/CityScapes/tfrecords-new-pipeline/val_samples_mapping.csv'
+mapping_file: 'mappings.yaml'
+tfrecords_base_name: 'city-scapes.tfrecords'
+destination_size: [2048, 1024]
+img_mean: [103.939, 116.779, 123.68]
+model_name: 'ICNet'
+num_classes: 20
+ignore_labels: [0]
+model_dir: '/archive/model_storage/big_images_model/plain_icnet_augmented_1_2019_10_21_22:06'
+# /archive/model_storage/big_images_model/icnet_momentum_2_2019_11_10_18:31
+checkpoint_name: 'checkpoint.ckpt-95'
+# checkpoint.ckpt-100
+batch_size: 8
+dummy_iterator_tfrecords_files: 'all'
+gpu_to_use: 0

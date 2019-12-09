@@ -1,7 +1,25 @@
 import os
-from typing import Dict
+import csv
+from typing import Dict, List
 
 import yaml
+
+
+def read_csv_file(file_path: str, delimiter: str = ',') -> List[list]:
+    file_content = []
+    with open(file_path, 'r') as f:
+        reader = csv.reader(f, delimiter=delimiter)
+        for row in reader:
+            file_content.append(row)
+    return file_content
+
+
+def dump_content_to_csv(file_path: str, content: List[list]) -> None:
+    target_dir = os.path.dirname(file_path)
+    create_directory(target_dir)
+    with open(file_path, "w") as f:
+        writer = csv.writer(f)
+        writer.writerows(content)
 
 
 def create_directory(directory_path):
@@ -12,3 +30,20 @@ def create_directory(directory_path):
 def read_yaml_file(file_path: str) -> Dict:
     with open(file_path, 'r') as config_file:
         return yaml.load(config_file)
+
+
+def read_text_file_lines(file_path: str,
+                         ignore_empty_lines: bool = True) -> List[str]:
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+        lines = map(lambda l: l.strip(), lines)
+        if ignore_empty_lines:
+            lines = filter(lambda l: len(l) > 0, lines)
+    return list(lines)
+
+
+def dump_text_file(file_path: str, content: str) -> None:
+    dir_path = os.path.dirname(file_path)
+    create_directory(directory_path=dir_path)
+    with open(file_path, 'w') as f:
+        f.write(content)
