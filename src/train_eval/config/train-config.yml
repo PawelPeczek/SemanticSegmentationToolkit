@@ -8,14 +8,14 @@ mapping_file: 'mappings.yaml'
 destination_size: [2048, 1024]
 img_mean: [103.939, 116.779, 123.68]
 tfrecords_base_name: 'city-scapes.tfrecords'
-optimizer_options:
-  optimizer_name: 'AdamW'
-  learning_rate: 0.001
-  weight_decay: 0.0001
 #optimizer_options:
-#  optimizer_name: 'Momentum'
+#  optimizer_name: 'AdamW'
 #  learning_rate: 0.001
-#  momentum: 0.9
+#  weight_decay: 0.0001
+optimizer_options:
+  optimizer_name: 'Momentum'
+  learning_rate: 0.01
+  momentum: 0.9
 model_name: 'ICNet'
 num_classes: 20
 ignore_labels: [0]
@@ -23,20 +23,23 @@ model_config:
   lambda_1: 0.16
   lambda_2: 0.4
   lambda_3: 1.0
+#  lambda_1: 1.0
+#  lambda_2: 1.0
+#  lambda_3: 1.0
 #  weight_decay: 0.0001
-checkpoint_to_restore: '/archive/model_storage/big_images_model/auto_encoder_2019_09_10_04:29/checkpoint.ckpt-60'
+#checkpoint_to_restore: '/archive/model_storage/big_images_model/icnet_ae_augmented_1_2019_10_22_06:23/checkpoint.ckpt-44'
 model_storage_directory: '/archive/model_storage/big_images_model/'
 checkpoint_name: 'checkpoint'
 batch_size: 6
 #gpu_to_use: [0, 1]
-gpu_to_use: [0]
+gpu_to_use: 0
 epochs: 10000
 increase_saving_frequency_loss_treshold: 0.15
-saving_frequency: 500
+saving_frequency: 5
 measure_train_accuracy: False
-measure_train_accuracy_frequency: 100
-measure_val_accuracy: False
-measure_val_accuracy_frequency: 5
+measure_train_accuracy_frequency: 5
+measure_val_accuracy: True
+measure_val_accuracy_frequency: 1
 dummy_iterator_tfrecords_files: 100
 dummy_iterator_examples: 100
 radnom_data_transformation: True

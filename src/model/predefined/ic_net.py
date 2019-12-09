@@ -67,5 +67,3 @@ class ICNet(ICNetBackbone):
             loss_weights=cls_weights,
             labels_to_ignore=self._ignore_labels)
 
-    def _get_variables_name_not_to_restore(self) -> Set[str]:
-        return {'conv6_cls', 'conv_sub2_cls', 'conv_sub4_cls'}

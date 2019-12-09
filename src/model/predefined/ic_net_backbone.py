@@ -1,4 +1,5 @@
 from abc import ABC
+from copy import deepcopy
 from typing import Optional, List, Tuple
 
 import tensorflow as tf
@@ -23,8 +24,7 @@ class ICNetBackbone(Network, ABC):
         (
             {
                 'output_filters': (32, 32, 128),
-                'project_input': False,
-                'name': 'conv2_2'
+                'project_input': False
             },
             ['conv2_2', 'conv2_3']
         ),
@@ -266,9 +266,9 @@ class ICNetBackbone(Network, ABC):
     def __unpack_encoder_configs(self,
                                  configs: EncoderConfigs) -> FlatEncoderConfigs:
         def __update_config(config: dict, name: str) -> dict:
+            config = deepcopy(config)
             config['name'] = name
             return config
-
         return [
             __update_config(config, name)
             for config, names in configs for name in names

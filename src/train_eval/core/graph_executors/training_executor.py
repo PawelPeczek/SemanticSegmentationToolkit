@@ -94,6 +94,7 @@ class TrainingExecutor(GraphExecutor):
                 else_value=None
             )
             if checkpoint_path is not None:
+                print(f'Restoring checkpoint: {checkpoint_path}')
                 self._model.restore_checkpoint(
                     checkpoint_path=checkpoint_path,
                     session=sess
