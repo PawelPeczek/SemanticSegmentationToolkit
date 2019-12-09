@@ -576,6 +576,66 @@ and register the transformation in
 __TODO:__ registering new random transformations need to be refactorized and in 
 a way that is used e.g. to register new models.
 
+## Additional utils
+
+### Network features (aka activations) visualisation
+It is possible to visualise network activations as response to a particular input 
+(feature map slices are normalized w.r.t a particular depth channel and blended 
+with original image as value of RED channel in RGB color model). The tool is 
+available to be used as a function - 
+[usage example](src/notebooks/FeaturesVisualization.ipynb)
+
+```python
+# prepare input placeholder and output node
+network = ICNetAutoEncoder(20, [103.939, 116.779, 123.68], [0], {'lambda_1': 0.16, 'lambda_2': 0.4, 'lambda_3': 1.0})
+with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
+    # can be ommited if not re-using weight inside network
+    x = tf.placeholder(tf.float32, [None, 1024, 2048, 3])
+    y_operation = network.infer(x)
+
+# define network nodes to visualise output
+nodes_to_test = ['some_layer_name']
+
+
+# useage of visualize_features()
+with tf.Session() as sess:
+    network.restore_checkpoint(model_path, sess)
+    visualize_features(
+        session=sess,
+        graph=graph,
+        nodes=nodes_to_test,
+        input_images=images_to_test,
+        x_placeholder=x,
+        target_dir='target_dir'
+    )
+```
+
+Result example:
+![features_visualisation](docs/features_vis.jpeg)
+
+
+### Operations profiling
+It is also possible to profile (time-wise) particular operations/layers/network 
+building blocks. The tool is also available as function - see 
+[usage_example](src/notebooks/OperationsProfiling.ipynb).
+
+```python
+# prepare input placeholder and output node
+network = ICNet(20, [103.939, 116.779, 123.68], [0], {'lambda_1': 0.16, 'lambda_2': 0.4, 'lambda_3': 1.0})
+with tf.variable_scope(tf.get_variable_scope(), reuse=tf.AUTO_REUSE):
+    # can be ommited if not re-using weight inside network
+    x = tf.placeholder(tf.float32, [1, 1024, 2048, 3])
+    y_operation = network.infer(x)
+    
+    
+# tool usage
+profiling_results = profile_operation(
+    operation=y_operation,
+    x_placeholder=x,
+    device='/gpu:0'
+)
+```
+
 ## Additional citations
 ```bibtex
 @inproceedings{Cordts2016Cityscapes,
