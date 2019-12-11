@@ -1,4 +1,4 @@
-# TensorFlow Training Platform
+# Semantic Segmentation toolkit
 
 ## Project overview
 The __TensorFlow Training Platform__ is a software toolkit to aid experiments 
