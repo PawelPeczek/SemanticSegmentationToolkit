@@ -636,6 +636,13 @@ profiling_results = profile_operation(
 )
 ```
 
+## Tests
+To run tests please use the following command:
+
+```bash
+pytest
+```
+
 ## Additional citations
 ```bibtex
 @inproceedings{Cordts2016Cityscapes,
