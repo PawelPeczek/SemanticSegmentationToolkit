@@ -3,3 +3,6 @@ numpy
 matplotlib
 tqdm
 PyYAML
+pytest
+pytest-cov
+parameterized

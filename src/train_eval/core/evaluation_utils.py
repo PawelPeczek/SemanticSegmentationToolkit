@@ -1,6 +1,7 @@
 import os
 import statistics
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Tuple, Set, Optional
+import logging
 
 import numpy as np
 import cv2 as cv
@@ -12,14 +13,17 @@ from src.dataset.utils.mapping_utils import get_color_to_id_mapping, \
 from src.utils.filesystem_utils import read_csv_file
 
 
+logging.getLogger().setLevel(logging.INFO)
+
+
 class EvaluationAccumulatorEntry:
 
     def __init__(self, intersection: int = 0, union: int = 0):
         self.intersection = intersection
         self.union = union
 
-    def get_iou(self) -> float:
-        return self.intersection / self.union if self.union != 0 else 0.0
+    def get_iou(self) -> Optional[float]:
+        return self.intersection / self.union if self.union != 0 else None
 
 
 class PostInferenceEvaluator:
@@ -31,11 +35,13 @@ class PostInferenceEvaluator:
         id2gt = self.__get_id2gt_mapping()
         samples_to_evaluate = self.__prepare_evaluation_samples(id2gt)
         mapping = get_color_to_id_mapping(self.__config.mapping_file)
-        ignored_classes = set(self.__config.ignore_labels)
+        evaluator = _Evaluator(
+            mapping=mapping,
+            ignored_classes=set(self.__config.ignore_labels)
+        )
         self.__proceed_evaluation(
             samples=samples_to_evaluate,
-            mapping=mapping,
-            ignored_classes=ignored_classes
+            evaluator=evaluator
         )
 
     def __get_id2gt_mapping(self) -> Dict[str, str]:
@@ -70,19 +76,14 @@ class PostInferenceEvaluator:
 
     def __proceed_evaluation(self,
                              samples: List[Tuple[np.ndarray, np.ndarray]],
-                             mapping: Color2IdMapping,
-                             ignored_classes: Set[int]
+                             evaluator: '_Evaluator'
                              ) -> None:
-        accumulator = {}
         for inference_result, gt in tqdm(samples):
-            accumulator = self.__evaluate_example(
+            evaluator.evaluate_example(
                 inference_result=inference_result,
-                gt=gt,
-                mapping=mapping,
-                ignored_classes=ignored_classes,
-                accumulator=accumulator
+                gt=gt
             )
-        self.__summarize(accumulator)
+        self.__summarize(evaluator)
 
     def __evaluate_example(self,
                            inference_result: np.ndarray,
@@ -127,15 +128,79 @@ class PostInferenceEvaluator:
         return accumulator
 
     def __summarize(self,
-                    accumulator: Dict[int, EvaluationAccumulatorEntry]
+                    evaluator: '_Evaluator'
                     ) -> None:
-        ious = []
-        for class_id, evaluation_entry in accumulator.items():
-            class_iou = evaluation_entry.get_iou()
+        ious = evaluator.get_classes_ious()
+        for class_id, class_iou in ious:
             print(f'Class {class_id}: {class_iou}')
-            ious.append(class_iou)
-        mean_iou = statistics.mean(ious)
-        print(f'mIou: {mean_iou}')
+        print(f'mIou: {evaluator.get_miou()}')
 
 
+class _Evaluator:
+
+    def __init__(self,
+                 mapping: Color2IdMapping,
+                 ignored_classes: Set[int]):
+        self.__mapping = mapping
+        self.__ignored_classes = ignored_classes
+        self.__accumulator = self.__initialize_accumulator()
+
+    def get_classes_ious(self) -> List[Tuple[int, Optional[float]]]:
+        result = []
+        for class_id in self.__accumulator:
+            class_iou = self.get_class_iou(class_id)
+            result.append((class_id, class_iou))
+        return result
+
+    def get_class_iou(self, class_id: int) -> Optional[float]:
+        if class_id not in self.__accumulator:
+            return None
+        class_evaluation = self.__accumulator[class_id]
+        return class_evaluation.get_iou()
+
+    def get_miou(self) -> Optional[float]:
+        ious = []
+        for class_id in self.__accumulator:
+            class_iou = self.__accumulator[class_id].get_iou()
+            if class_iou is None and class_iou not in self.__ignored_classes:
+                logging.warning(f'Unable to calculate IoU for class {class_id}')
+            else:
+                ious.append(class_iou)
+        if len(ious) == 0:
+            return None
+        else:
+            return statistics.mean(ious)
+
+    def evaluate_example(self,
+                         inference_result: np.ndarray,
+                         gt: np.ndarray) -> None:
+        for color, color_id in self.__mapping.items():
+            if color_id in self.__ignored_classes:
+                continue
+            inference_color_area = \
+                cv.inRange(inference_result, color, color).astype(np.bool)
+            gt_color_area = cv.inRange(gt, color, color).astype(np.bool)
+            intersection = np.logical_and(inference_color_area, gt_color_area)
+            union = np.logical_or(inference_color_area, gt_color_area)
+            intersection_area = np.count_nonzero(intersection)
+            union_area = np.count_nonzero(union)
+            self.__update_accumulator(
+                color_id=color_id,
+                intersection_area=intersection_area,
+                union_area=union_area
+            )
+
+    def __update_accumulator(self,
+                             color_id: int,
+                             intersection_area: int,
+                             union_area: int
+                             ) -> None:
+        self.__accumulator[color_id].intersection += intersection_area
+        self.__accumulator[color_id].union += union_area
+
+    def __initialize_accumulator(self) -> Dict[int, EvaluationAccumulatorEntry]:
+        result = dict()
+        for _, class_id in self.__mapping.items():
+            result[class_id] = EvaluationAccumulatorEntry()
+        return result
 
