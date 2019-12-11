@@ -1,7 +1,7 @@
 # Semantic Segmentation toolkit
 
 ## Project overview
-The __TensorFlow Training Platform__ is a software toolkit to aid experiments 
+The __Semantic Segmentation toolkit__ is a software toolkit to aid experiments 
 connected with Deep Learning semantic segmentation. It was designed to boost
 experiments pace and offload the end-user from creating _boilerplate_ code that
 usually need to be developed in such case. As the name says, the platform is 
